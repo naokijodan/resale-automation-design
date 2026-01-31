@@ -454,6 +454,8 @@
       <button class="tab-button" onclick="openTab('copilot')">👨‍✈️ コパイロット運用</button>
       <button class="tab-button" onclick="openTab('cost')">💰 コスト & ROI</button>
       <button class="tab-button" onclick="openTab('phases')">📅 実装計画</button>
+      <button class="tab-button" onclick="openTab('ai-check')">🔍 AIチェックフロー</button>
+      <button class="tab-button" onclick="openTab('issues')">🐛 技術課題</button>
       <button class="tab-button" onclick="openTab('risks')">⚠️ リスク管理</button>
     </div>
 
@@ -2205,6 +2207,356 @@ ROI = (人間コスト ÷ AI統合コスト) × 100
         - 1週間連続稼働でエラーなし<br>
         - 自動化率95%（475/500商品）
       </div>
+    </div>
+
+    <!-- タブ: AIチェックフロー -->
+    <div id="ai-check" class="tab-content">
+      <h2>🔍 AIチェックフロー（3者協議結果）</h2>
+
+      <div class="alert alert-info">
+        <strong>📌 この設計の背景</strong><br>
+        「AIは商品ページをどこまで確認できるか？」という問いに対し、Claude・GPT・Geminiの3者で協議した結果をもとに設計しています。<br>
+        <strong>結論: AIは「落とす役」に徹し、曖昧なものは全部人間に回す（安全側に倒す）</strong>
+      </div>
+
+      <h3>📊 AIの商品確認能力（現実的な精度）</h3>
+
+      <table>
+        <thead>
+          <tr>
+            <th>レベル</th>
+            <th>できること</th>
+            <th>精度</th>
+            <th>備考</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="badge badge-success">確実</span></td>
+            <td>テキスト判定（ジャンク・価格・出品者評価・NGワード）</td>
+            <td><strong>90%以上</strong></td>
+            <td>キーワードマッチ、数値比較で処理</td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-success">確実</span></td>
+            <td>価格の妥当性チェック（eBay相場との差）</td>
+            <td><strong>90%以上</strong></td>
+            <td>しらべる君の既存ロジック活用</td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-info">まあまあ</span></td>
+            <td>画像から物体の有無（箱あり？付属品あり？）</td>
+            <td><strong>80%前後</strong></td>
+            <td>Vision APIで「あるかないか」は得意</td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-warning">微妙</span></td>
+            <td>傷の程度、美品かどうか、色味の正確さ</td>
+            <td><strong>70%前後</strong></td>
+            <td>照明の反射と傷の区別が難しい</td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-danger">無理</span></td>
+            <td>高品質な偽物判定、微細な傷、市場トレンド急変</td>
+            <td><strong>50%以下</strong></td>
+            <td>人間でも難しい領域。AIに任せてはいけない</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>🔄 推奨チェックフロー（7ステップ）</h3>
+
+      <div class="card card-info">
+        <h4>全体の流れ</h4>
+        <p>ポイント: <strong>安い処理から順番にやり、高い処理は「有望な商品」だけに使う</strong></p>
+      </div>
+
+      <div class="card">
+        <h4>① Webhook → スプレッドシートに落とし込む</h4>
+        <p>とりこみ君的な機能で、メルカリの商品データを自動的にGoogle Sheetsに送る。</p>
+        <p><strong>取得データ</strong>: タイトル、価格、商品状態、出品者ID、評価数、画像URL、出品日時</p>
+      </div>
+
+      <div class="card card-success">
+        <h4>② 1次フィルタ（テキスト判定）<span class="badge badge-success">安い・速い</span></h4>
+        <p><strong>ここで50%以上を落とす。</strong>AIは使わず、ルールベースの条件だけで処理。</p>
+        <ul>
+          <li>NGワード除外: JUNK, PARTS, 故障, 動作未確認, ジャンク</li>
+          <li>価格フィルタ: eBay相場の仕入れ上限を超えているものを除外</li>
+          <li>出品者フィルタ: 評価数が少なすぎる / 悪い評価率が高い出品者を除外</li>
+          <li>みちゃった君連携: 過去に見た商品を重複除外</li>
+        </ul>
+        <p><strong>コスト: ほぼゼロ（APIを使わない）</strong></p>
+      </div>
+
+      <div class="card card-info">
+        <h4>③ 2次フィルタ（画像AI判定）<span class="badge badge-info">高い・遅い → 有望株だけに使う</span></h4>
+        <p>1次を通過した<strong>上位20〜30%</strong>だけにVision API（Claude Vision / GPT-4o）を投げる。</p>
+        <ul>
+          <li>画像と説明文の整合性チェック（「美品」と書いてあるが画像に傷が見える等）</li>
+          <li>付属品の有無確認（箱、保証書、ACアダプタが写真に写っているか）</li>
+          <li>商品のカテゴリ・ブランド確認（タイトルと実物が一致しているか）</li>
+        </ul>
+        <p><strong>コスト: 1商品あたり約5〜10円（画像枚数による）</strong></p>
+      </div>
+
+      <div class="card">
+        <h4>④ AI出力はJSON形式で固定する</h4>
+        <p>AIに自由に文章を書かせると、後で処理できない。必ず以下のような<strong>構造化データ</strong>で返させる。</p>
+        <div class="code-block">
+{
+  <span class="string">"status"</span>: <span class="string">"warning"</span>,          <span class="comment">// pass / warning / reject</span>
+  <span class="string">"has_box"</span>: <span class="keyword">true</span>,              <span class="comment">// 箱はあるか</span>
+  <span class="string">"has_accessories"</span>: <span class="keyword">false</span>,     <span class="comment">// 付属品はあるか</span>
+  <span class="string">"scratch_level"</span>: <span class="string">2</span>,           <span class="comment">// 傷レベル (0=なし 1=軽微 2=目立つ 3=重度)</span>
+  <span class="string">"is_authentic"</span>: <span class="string">"unknown"</span>,    <span class="comment">// 真贋 (yes / no / unknown)</span>
+  <span class="string">"confidence"</span>: <span class="string">0.82</span>,           <span class="comment">// AIの自信度 (0〜1)</span>
+  <span class="string">"reason"</span>: <span class="string">"画像3枚目に傷あり、説明文に記載なし"</span>,
+  <span class="string">"image_index"</span>: <span class="string">3</span>              <span class="comment">// 問題のある画像の番号</span>
+}
+        </div>
+        <p>これにより、スプレッドシート上で<strong>自動的に色分け</strong>ができる。</p>
+      </div>
+
+      <div class="card">
+        <h4>⑤ スプレッドシートに結果を書き戻す</h4>
+        <p>AIの判定結果をシートに追記。<strong>条件付き書式</strong>で自動色分け:</p>
+        <ul>
+          <li style="color: #10b981;"><strong>緑（pass）</strong>: AIが問題なしと判断 → 流し見でOK</li>
+          <li style="color: #f59e0b;"><strong>黄（warning）</strong>: AIが注意点を発見 → 理由を確認</li>
+          <li style="color: #ef4444;"><strong>赤（reject）</strong>: AIが問題ありと判断 → 基本スキップ</li>
+          <li style="color: #9333ea;"><strong>紫（unknown）</strong>: AIが判断できない → 人間が必ず確認</li>
+        </ul>
+      </div>
+
+      <div class="card card-warning">
+        <h4>⑥ カード型UIで最終確認（スクロール完了を目指す）</h4>
+        <p><strong>スプレッドシートだけでは画像確認が厳しい</strong>（3者一致の指摘）。以下のいずれかで画像を大きく表示:</p>
+        <ul>
+          <li><strong>AppSheet</strong>: Google Sheetsと自動連携。ギャラリービューで画像+判定理由を一覧表示</li>
+          <li><strong>Airtable</strong>: カードビューで視覚的に確認。フィルタ・ソートも強力</li>
+          <li><strong>HTMLレポート</strong>: 自前で生成。カスタマイズ自由度は最高</li>
+        </ul>
+        <p>表示は<strong>「危険度順」にソート</strong>。上の方（安全）は高速スクロール、下の方（要注意）だけ止まって確認。</p>
+      </div>
+
+      <div class="card card-success">
+        <h4>⑦ フィードバックループ（AIが賢くなる仕組み）</h4>
+        <p>人間がAIの判定を覆した場合（passを却下、rejectを承認など）、そのデータを記録する。</p>
+        <ul>
+          <li>誤判定リストを別シートに自動ログ</li>
+          <li>定期的に分析 → NGワード追加、判定基準を調整</li>
+          <li>Few-Shot学習: 人間の判断例をAIのプロンプトに追加して精度向上</li>
+        </ul>
+        <p><strong>使えば使うほど、人間が確認する量が減っていく</strong>設計。</p>
+      </div>
+
+      <h3>💡 3者協議で出た重要な指摘</h3>
+
+      <div class="card card-claude">
+        <h4>Claude: AIは3段階で考える</h4>
+        <p>「確実にできること」「まあまあできること」「無理なこと」を明確に分けて、無理な部分は最初から人間に任せる設計にすべき。</p>
+      </div>
+
+      <div class="card card-gpt">
+        <h4>GPT: 2段階チェックは「視点を変える」</h4>
+        <p>同じデータを2回見ても意味がない。1次はテキスト、2次は画像+価格整合性、というように<strong>別の視点</strong>でチェックする。</p>
+      </div>
+
+      <div class="card card-gemini">
+        <h4>Gemini: コストを考えたFail Fast設計</h4>
+        <p>画像AIは高い（1回5〜10円）。全商品に使うと500商品で2,500〜5,000円/日。テキストで先に半分落とせば1,250〜2,500円に削減できる。</p>
+      </div>
+
+      <div class="card card-gemini">
+        <h4>Gemini: スプレッドシートの限界</h4>
+        <p>スプレッドシートのセル内画像は小さすぎて商品の状態確認には使えない。データはスプレッドシートに保存し、確認画面は別に用意する（AppSheet / Airtable / HTMLレポート）。</p>
+      </div>
+
+      <div class="card card-gpt">
+        <h4>GPT: AI出力に「判定理由+根拠画像番号」が必須</h4>
+        <p>「不合格」だけでは人間が判断できない。「画像3枚目に傷、説明文に記載なし」のように、<strong>理由1行＋どの画像を見ればいいか</strong>をセットで返す。</p>
+      </div>
+    </div>
+
+    <!-- タブ: 技術課題 -->
+    <div id="issues" class="tab-content">
+      <h2>🐛 技術課題（既知の問題と解決策）</h2>
+
+      <div class="alert alert-warning">
+        <strong>📌 このタブについて</strong><br>
+        実装を進める中で発見された技術的な課題と、調査結果・解決方針をまとめています。<br>
+        新しい課題が見つかり次第、ここに追記していきます。
+      </div>
+
+      <h3>🔴 課題1: メルカリ出品者評価の取得が不正確</h3>
+
+      <div class="card card-danger">
+        <h4>問題の概要</h4>
+        <p>とりこみ君でメルカリの出品者評価（良い・普通・悪いの件数）を取得しようとすると、<strong>別のセクションの数値を拾ってしまう</strong>。</p>
+        <p>かなり調整を重ねたが、安定して正しい値が取れない状態が続いている。</p>
+      </div>
+
+      <div class="card">
+        <h4>現在の取得方法（4段階フォールバック）</h4>
+        <p>とりこみ君の <code>getSellerRating()</code> 関数（content.js 行5089〜5225）では、4つの方法を順番に試している:</p>
+        <table>
+          <thead>
+            <tr>
+              <th>方法</th>
+              <th>やり方</th>
+              <th>問題点</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>方法1</strong></td>
+              <td>フリマアシスト拡張機能が作った要素 <code>#furima-assist-seller-ratings</code> から読み取る</td>
+              <td>フリマアシストが先に読み込まれていないと動かない</td>
+            </tr>
+            <tr>
+              <td><strong>方法2</strong></td>
+              <td>CSSクラスに「Rating」を含むspan要素を検索</td>
+              <td><span style="color: #ef4444;"><strong>商品の星評価など、出品者評価と関係ない要素もヒットする</strong></span></td>
+            </tr>
+            <tr>
+              <td><strong>方法3</strong></td>
+              <td>ページ全体のテキストから「良い○○」「悪い○○」を正規表現で検索</td>
+              <td><span style="color: #ef4444;"><strong>商品説明文の「状態良い」や、いいね数・閲覧数など全く別の数字を拾う</strong></span></td>
+            </tr>
+            <tr>
+              <td><strong>方法4</strong></td>
+              <td>メルカリショップ用の星評価パターン</td>
+              <td>ショップ専用。通常の個人出品には使えない</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card card-warning">
+        <h4>なぜ上手くいかないのか（根本原因）</h4>
+        <ul>
+          <li><strong>方法2の問題</strong>: <code>[class*="Rating"]</code> というセレクタが広すぎて、ページ内の「商品評価」「星評価」など無関係なRating要素も全部拾ってしまう</li>
+          <li><strong>方法2の矛盾</strong>: 出品者セクションを除外するフィルタが入っている（行5156-5161）が、<strong>取りたいのは出品者の評価なので、逆に正解を除外している可能性がある</strong></li>
+          <li><strong>方法3の問題</strong>: <code>document.body.innerText</code>（ページ全体のテキスト）を対象にしているため、商品説明文中の「良い」「悪い」や、いいね数・閲覧数など<strong>全く関係ない数字にヒットしてしまう</strong></li>
+          <li><strong>メルカリのHTML構造がよく変わる</strong>: CSSクラス名がハッシュ化されていて、アップデートのたびにセレクタが壊れる</li>
+        </ul>
+      </div>
+
+      <div class="card card-success">
+        <h4>解決方針（3つのアプローチ）</h4>
+
+        <h5>A案: __NEXT_DATA__からJSON抽出（最も確実）</h5>
+        <p>メルカリはNext.jsで作られており、ページ内に <code>&lt;script id="__NEXT_DATA__"&gt;</code> というタグがある。ここに出品者情報が<strong>構造化されたJSON</strong>として埋め込まれている。</p>
+        <p>しらべる君の <code>mercari-analyzer.js</code> が既にこの方法を使っている。テキスト検索や CSS セレクタに頼る必要がなく、<strong>HTML構造が変わっても影響を受けにくい</strong>。</p>
+        <div class="code-block">
+<span class="comment">// イメージ: __NEXT_DATA__から評価を取得</span>
+<span class="keyword">const</span> nextData = JSON.<span class="function">parse</span>(
+  document.<span class="function">querySelector</span>(<span class="string">'#__NEXT_DATA__'</span>).textContent
+);
+<span class="keyword">const</span> seller = nextData.props.pageProps.item.seller;
+<span class="comment">// seller.ratings.good, seller.ratings.normal, seller.ratings.bad</span>
+        </div>
+        <p><span class="badge badge-success">推奨</span> HTML変更に強い。しらべる君で実績あり。</p>
+
+        <h5>B案: フリマアシストに完全依存（現実的）</h5>
+        <p>方法1のフリマアシスト連携だけを使い、方法2・3は廃止する。</p>
+        <p>ただし、フリマアシストが先にDOMに要素を挿入するタイミングを待つ必要がある（遅延読み込み対策）。</p>
+        <div class="code-block">
+<span class="comment">// フリマアシストの要素が出るまで待つ</span>
+<span class="keyword">const</span> waitForAssist = () => <span class="keyword">new</span> <span class="function">Promise</span>((resolve) => {
+  <span class="keyword">const</span> observer = <span class="keyword">new</span> <span class="function">MutationObserver</span>(() => {
+    <span class="keyword">const</span> el = document.<span class="function">querySelector</span>(<span class="string">'#furima-assist-seller-ratings'</span>);
+    <span class="keyword">if</span> (el) { observer.<span class="function">disconnect</span>(); <span class="function">resolve</span>(el); }
+  });
+  observer.<span class="function">observe</span>(document.body, { childList: <span class="keyword">true</span>, subtree: <span class="keyword">true</span> });
+});
+        </div>
+        <p><span class="badge badge-info">安定</span> 既存の仕組みを活用。ただしフリマアシストへの依存が生まれる。</p>
+
+        <h5>C案: テキスト検索の範囲を限定（暫定対応）</h5>
+        <p>方法3のテキスト検索を、ページ全体ではなく<strong>出品者情報セクションに限定</strong>する。</p>
+        <div class="code-block">
+<span class="comment">// ページ全体ではなく、出品者セクションだけを検索対象にする</span>
+<span class="keyword">const</span> sellerSection = document.<span class="function">querySelector</span>(
+  <span class="string">'[data-testid="seller-info"]'</span>
+);
+<span class="keyword">if</span> (sellerSection) {
+  <span class="keyword">const</span> text = sellerSection.innerText;
+  <span class="comment">// この範囲内でだけ「良い」「悪い」を検索</span>
+}
+        </div>
+        <p><span class="badge badge-warning">暫定</span> 簡単に実装できるが、data-testid が変わると壊れる。</p>
+      </div>
+
+      <div class="card">
+        <h4>推奨: A案 + B案の併用</h4>
+        <ol>
+          <li>まず <code>__NEXT_DATA__</code> からJSON取得を試みる（A案）</li>
+          <li>失敗した場合、フリマアシストの要素を待って読み取る（B案）</li>
+          <li>どちらも失敗した場合のみ、C案（範囲限定テキスト検索）にフォールバック</li>
+        </ol>
+        <p>方法2（広範囲セレクタ）と方法3（ページ全体テキスト検索）は<strong>廃止</strong>が望ましい。</p>
+      </div>
+
+      <h3>🟡 課題2: フリマアシストとの拡張機能読み込み順序</h3>
+
+      <div class="card">
+        <h4>問題</h4>
+        <p>とりこみ君がフリマアシストの要素を読みに行く時、フリマアシストがまだ要素を作っていない場合がある（読み込み順序の問題）。</p>
+        <h4>解決方針</h4>
+        <p>MutationObserver（上記B案のコード）で要素の出現を監視する。タイムアウト（5秒）を設けて、出現しなければ次の方法にフォールバック。</p>
+      </div>
+
+      <h3>🟡 課題3: メルカリのCSS クラス名のハッシュ化</h3>
+
+      <div class="card">
+        <h4>問題</h4>
+        <p>メルカリのCSSクラス名は <code>sc-1a2b3c4</code> のようにハッシュ化されており、アップデートのたびに変わる。CSSセレクタに依存すると壊れやすい。</p>
+        <h4>解決方針</h4>
+        <ul>
+          <li><code>data-testid</code> 属性を優先使用（メルカリが公式に付与しているテスト用属性で、比較的安定）</li>
+          <li><code>__NEXT_DATA__</code> のJSON構造を優先（HTML構造に依存しない）</li>
+          <li>CSSセレクタは最終手段とし、壊れた場合の検知・自動通知を入れる</li>
+        </ul>
+      </div>
+
+      <h3>📋 課題一覧（ステータス管理）</h3>
+
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>課題</th>
+            <th>優先度</th>
+            <th>ステータス</th>
+            <th>担当</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>1</td>
+            <td>メルカリ出品者評価の取得不正確</td>
+            <td><span class="badge badge-danger">高</span></td>
+            <td><span class="badge badge-warning">調査完了・修正待ち</span></td>
+            <td>とりこみ君改修時</td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td>フリマアシストとの読み込み順序問題</td>
+            <td><span class="badge badge-warning">中</span></td>
+            <td><span class="badge badge-info">方針決定済み</span></td>
+            <td>とりこみ君改修時</td>
+          </tr>
+          <tr>
+            <td>3</td>
+            <td>メルカリCSSクラス名のハッシュ化対策</td>
+            <td><span class="badge badge-warning">中</span></td>
+            <td><span class="badge badge-info">方針決定済み</span></td>
+            <td>全拡張機能共通</td>
+          </tr>
+        </tbody>
+      </table>
     </div>
 
     <!-- タブ10: リスク管理 -->
