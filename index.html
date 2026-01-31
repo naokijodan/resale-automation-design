@@ -454,6 +454,7 @@
       <button class="tab-button" onclick="openTab('copilot')">👨‍✈️ コパイロット運用</button>
       <button class="tab-button" onclick="openTab('cost')">💰 コスト & ROI</button>
       <button class="tab-button" onclick="openTab('phases')">📅 実装計画</button>
+      <button class="tab-button" onclick="openTab('vibe-hive')">🐝 Vibe Hiveの役割</button>
       <button class="tab-button" onclick="openTab('ai-check')">🔍 AIチェックフロー</button>
       <button class="tab-button" onclick="openTab('issues')">🐛 技術課題</button>
       <button class="tab-button" onclick="openTab('risks')">⚠️ リスク管理</button>
@@ -2206,6 +2207,289 @@ ROI = (人間コスト ÷ AI統合コスト) × 100
         - 成功率95%以上<br>
         - 1週間連続稼働でエラーなし<br>
         - 自動化率95%（475/500商品）
+      </div>
+    </div>
+
+    <!-- タブ: Vibe Hiveの役割 -->
+    <div id="vibe-hive" class="tab-content">
+      <h2>🐝 Vibe Hive の役割</h2>
+
+      <div class="alert alert-info">
+        <strong>📌 そもそも Vibe Hive とは？</strong><br>
+        複数のClaude Code / Codex CLI / ターミナルを<strong>1画面で統合管理</strong>するElectronアプリ。<br>
+        ワークフロー、スケジューラー、Webhookサーバー、実行エンジンなど、自動化に必要な機能が既にある。
+      </div>
+
+      <h3>🤔 Vibe Hive は転売システムのどこに入るのか？</h3>
+
+      <div class="card">
+        <h4>一言で言うと: 「司令塔」</h4>
+        <p>Vibe Hive は自分で商品を探したりスクレイピングしたりしない。<br>
+        <strong>各パーツ（拡張機能、AIフィルタ、スプレッドシート）を指揮・監視する司令塔</strong>の役割。</p>
+        <p>たとえるなら、工場の「管制室」。機械を動かすのは各ラインだが、いつ動かすか・止めるか・問題が起きたら知らせるかを管理する場所。</p>
+      </div>
+
+      <h3>📋 Vibe Hive の既存機能と転売システムの対応</h3>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Vibe Hive の機能</th>
+            <th>ファイル</th>
+            <th>転売システムでの使い方</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>ワークフロー</strong></td>
+            <td>WorkflowEngine.ts</td>
+            <td>「メルカリ巡回 → フィルタ → AI判定 → シート書き込み」の一連の流れを定義</td>
+          </tr>
+          <tr>
+            <td><strong>スケジューラー</strong></td>
+            <td>WorkflowScheduler.ts</td>
+            <td>3セッション（10:12 / 15:08 / 21:15）の自動実行。±30分のランダムジッターも担当</td>
+          </tr>
+          <tr>
+            <td><strong>実行エンジン</strong></td>
+            <td>ExecutionEngine.ts</td>
+            <td>ワークフローの各ステップを順番に実行。エラー時の再試行も管理</td>
+          </tr>
+          <tr>
+            <td><strong>Webhookサーバー</strong></td>
+            <td>WebhookServer.ts</td>
+            <td>とりこみ君からのデータ受信。拡張機能 → Vibe Hive にデータが届く窓口</td>
+          </tr>
+          <tr>
+            <td><strong>ターミナル管理</strong></td>
+            <td>PtyService.ts</td>
+            <td>Extension Bridge（Puppeteer）の実行・監視。ログをリアルタイム表示</td>
+          </tr>
+          <tr>
+            <td><strong>通知</strong></td>
+            <td>NotificationService.ts<br>DesktopNotificationService.ts</td>
+            <td>Ban検知、CAPTCHA出現、エラー発生時にデスクトップ通知を送る</td>
+          </tr>
+          <tr>
+            <td><strong>Git連携</strong></td>
+            <td>GitService.ts</td>
+            <td>設定ファイルの変更履歴管理。拡張機能の更新追跡</td>
+          </tr>
+          <tr>
+            <td><strong>分析</strong></td>
+            <td>Analytics/</td>
+            <td>日次の処理数、成功率、Ban率、コストのダッシュボード表示</td>
+          </tr>
+          <tr>
+            <td><strong>セッション管理</strong></td>
+            <td>SessionService.ts</td>
+            <td>各セッション（朝・昼・夜）の開始・終了・結果を記録</td>
+          </tr>
+          <tr>
+            <td><strong>設定</strong></td>
+            <td>SettingsService.ts</td>
+            <td>APIキー、Proxy設定、フィルタ条件、スケジュール設定をGUIで管理</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>🔄 Vibe Hive を中心としたデータの流れ</h3>
+
+      <div class="card card-info">
+        <h4>ステップ1: スケジュール発火</h4>
+        <p><strong>WorkflowScheduler</strong> が時間になったらワークフローを起動（例: 10:12 ±30分）</p>
+      </div>
+
+      <div class="card">
+        <h4>ステップ2: Extension Bridge 起動</h4>
+        <p><strong>ExecutionEngine</strong> → <strong>PtyService</strong> でターミナルにExtension Bridgeを起動<br>
+        Puppeteerがメルカリにアクセスし、とりこみ君を通じてデータ取得開始</p>
+      </div>
+
+      <div class="card">
+        <h4>ステップ3: データ受信</h4>
+        <p>とりこみ君がWebhookで商品データを送信 → <strong>WebhookServer</strong> が受信<br>
+        受信データをSQLiteに一時保存</p>
+      </div>
+
+      <div class="card">
+        <h4>ステップ4: フィルタリング実行</h4>
+        <p><strong>ExecutionEngine</strong> が1次フィルタ（テキスト）→ 2次フィルタ（画像AI）を順番に実行<br>
+        進捗はVibe Hiveのダッシュボードにリアルタイム表示</p>
+      </div>
+
+      <div class="card">
+        <h4>ステップ5: 結果をスプレッドシートに書き出し</h4>
+        <p>フィルタ通過した商品をGoogle Sheetsに書き込み<br>
+        色分け情報（pass/warning/reject）も一緒に送る</p>
+      </div>
+
+      <div class="card card-warning">
+        <h4>ステップ6: 人間に通知</h4>
+        <p><strong>NotificationService</strong> が「セッション完了。確認待ち○件」とデスクトップ通知を送る<br>
+        人間はAppSheet/Airtable/HTMLで確認・承認</p>
+      </div>
+
+      <div class="card card-danger">
+        <h4>異常時: 緊急停止</h4>
+        <p>CAPTCHA出現・Ban検知・エラー多発 → <strong>ExecutionEngine</strong> が自動停止<br>
+        <strong>DesktopNotificationService</strong> が緊急通知を送る</p>
+      </div>
+
+      <h3>🏗️ 3段階の構成（Vibe Hiveの完成度に応じて）</h3>
+
+      <div class="card card-success">
+        <h4>構成A: 最小構成（Vibe Hive完成前でも始められる）</h4>
+        <p>Vibe Hiveは使わない。Node.jsスクリプト + node-cron で直接動かす。</p>
+        <ul>
+          <li><strong>メリット</strong>: 今すぐ始められる。Vibe Hiveの完成を待たなくていい</li>
+          <li><strong>デメリット</strong>: 監視・管理はターミナルのログを直接見る必要がある。GUI無し</li>
+          <li><strong>向いている人</strong>: CLIに慣れている。まずは動くものを作りたい</li>
+        </ul>
+        <div class="code-block">
+<span class="comment"># 最小構成の実行イメージ</span>
+node extension-bridge/index.js   <span class="comment"># Extension Bridge起動</span>
+node scheduler.js                <span class="comment"># cron で3セッション管理</span>
+node filter.js                   <span class="comment"># フィルタリング実行</span>
+        </div>
+      </div>
+
+      <div class="card card-info">
+        <h4>構成B: 中間構成（Vibe Hiveのターミナル機能を活用）</h4>
+        <p>Vibe Hiveのターミナルパネルでスクリプトを実行・監視する。</p>
+        <ul>
+          <li><strong>メリット</strong>: 複数ターミナルを1画面で管理。ログが見やすい</li>
+          <li><strong>デメリット</strong>: スケジュール実行は手動（またはcron併用）。転売専用UIは無し</li>
+          <li><strong>向いている人</strong>: Vibe Hiveの基本機能（ターミナル管理）が動いている状態</li>
+        </ul>
+        <p><strong>Vibe Hiveの画面イメージ:</strong></p>
+        <div class="code-block">
+┌─────────────────────────────────────────┐
+│ 🐝 Vibe Hive                           │
+├──────────┬──────────┬───────────────────┤
+│ Terminal1│ Terminal2│ Terminal3         │
+│ Extension│ AI      │ Webhook           │
+│ Bridge   │ Filter  │ Server            │
+│          │         │                   │
+│ [ログ]   │ [ログ]  │ [受信データ一覧]  │
+│          │         │                   │
+└──────────┴──────────┴───────────────────┘
+        </div>
+      </div>
+
+      <div class="card card-claude">
+        <h4>構成C: 理想構成（Vibe Hive内に転売パネルを構築）</h4>
+        <p>Vibe Hiveのワークフロー・スケジューラー・Webhook・実行エンジンをフル活用。転売専用のGUIパネルを追加。</p>
+        <ul>
+          <li><strong>メリット</strong>: すべてがVibe Hive内で完結。スケジュール設定、実行、監視、レビュー、統計がGUIで操作可能</li>
+          <li><strong>デメリット</strong>: Vibe Hive自体の開発が必要。ワークフロー機能が完成している前提</li>
+          <li><strong>向いている人</strong>: Vibe Hiveを本格的に使いたい。長期運用を見据えている</li>
+        </ul>
+        <p><strong>Vibe Hiveの画面イメージ:</strong></p>
+        <div class="code-block">
+┌─────────────────────────────────────────────────┐
+│ 🐝 Vibe Hive  [転売ダッシュボード]              │
+├───────────────────┬─────────────────────────────┤
+│ 📊 今日の実績     │ 🔄 ワークフロー状態          │
+│ 処理: 340/500    │ セッション1: ✅ 完了          │
+│ Pass: 89         │ セッション2: 🔄 実行中 (65%) │
+│ Warning: 23      │ セッション3: ⏳ 21:15予定     │
+│ Reject: 228      │                             │
+├───────────────────┤ 📋 確認待ち (23件)          │
+│ ⚠️ アラート       │ ┌─────┬──────┬────────┐     │
+│ Ban: 0           │ │ 画像│ 商品 │ AI判定 │     │
+│ CAPTCHA: 1       │ ├─────┼──────┼────────┤     │
+│ Error: 2         │ │ 📷  │ ¥3980│ ⚠️傷あり│     │
+│                  │ │ 📷  │ ¥8500│ ⚠️箱なし│     │
+│ 💰 コスト(今日)   │ └─────┴──────┴────────┘     │
+│ API: ¥342        │                             │
+│ Proxy: ¥107      │ [承認] [却下] [詳細を見る]   │
+└───────────────────┴─────────────────────────────┘
+        </div>
+      </div>
+
+      <h3>💡 推奨ロードマップ</h3>
+
+      <div class="card">
+        <h4>現実的な進め方</h4>
+        <ol>
+          <li><strong>まず構成Aで始める</strong> — Node.jsスクリプトでExtension Bridge + フィルタを作る。Vibe Hiveの完成を待たない</li>
+          <li><strong>構成Aが動いたら構成Bへ</strong> — Vibe Hiveのターミナルでスクリプトを管理するだけ。コード変更は最小限</li>
+          <li><strong>運用が安定したら構成Cを検討</strong> — 転売専用パネルを作るかどうかは、構成Bで不便を感じてから決める</li>
+        </ol>
+        <p><strong>重要: 構成Aのスクリプトは構成B・Cでもそのまま使える</strong>ので、無駄にならない。</p>
+      </div>
+
+      <h3>❓ Vibe Hive に必要な機能（未完成の場合）</h3>
+
+      <table>
+        <thead>
+          <tr>
+            <th>機能</th>
+            <th>構成A</th>
+            <th>構成B</th>
+            <th>構成C</th>
+            <th>現在の状態</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>ターミナル管理</td>
+            <td>不要</td>
+            <td><span class="badge badge-danger">必須</span></td>
+            <td><span class="badge badge-danger">必須</span></td>
+            <td><span class="badge badge-success">実装済み</span>（PtyService.ts）</td>
+          </tr>
+          <tr>
+            <td>Webhookサーバー</td>
+            <td>自前で実装</td>
+            <td>自前 or VH</td>
+            <td><span class="badge badge-danger">必須</span></td>
+            <td><span class="badge badge-success">実装済み</span>（WebhookServer.ts）</td>
+          </tr>
+          <tr>
+            <td>ワークフロー定義</td>
+            <td>不要</td>
+            <td>不要</td>
+            <td><span class="badge badge-danger">必須</span></td>
+            <td><span class="badge badge-warning">実装中</span>（WorkflowEngine.ts）</td>
+          </tr>
+          <tr>
+            <td>スケジューラー</td>
+            <td>node-cron直接</td>
+            <td>node-cron直接</td>
+            <td><span class="badge badge-danger">必須</span></td>
+            <td><span class="badge badge-warning">実装中</span>（WorkflowScheduler.ts）</td>
+          </tr>
+          <tr>
+            <td>実行エンジン</td>
+            <td>不要</td>
+            <td>不要</td>
+            <td><span class="badge badge-danger">必須</span></td>
+            <td><span class="badge badge-warning">実装中</span>（ExecutionEngine.ts）</td>
+          </tr>
+          <tr>
+            <td>ダッシュボード</td>
+            <td>不要</td>
+            <td>不要</td>
+            <td>あると便利</td>
+            <td><span class="badge badge-warning">実装中</span>（Analytics/）</td>
+          </tr>
+          <tr>
+            <td>デスクトップ通知</td>
+            <td>不要</td>
+            <td>あると便利</td>
+            <td><span class="badge badge-danger">必須</span></td>
+            <td><span class="badge badge-success">実装済み</span></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="alert alert-warning">
+        <strong>⚠️ 現実的な判断</strong><br>
+        Vibe Hiveのワークフロー・スケジューラー・実行エンジンが完成するまで構成Cは実現できない。<br>
+        <strong>構成Aで動くものを作り、Vibe Hiveの開発と並行して進めるのが最も効率的。</strong><br>
+        構成Aのスクリプト群は、後からVibe Hiveに統合できる設計にしておく。
       </div>
     </div>
 
