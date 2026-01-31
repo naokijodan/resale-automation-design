@@ -1,0 +1,2400 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>転売自動化システム - 最終設計書（3者協議版）</title>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --info: #06b6d4;
+      --dark: #1e293b;
+      --light: #f8fafc;
+      --claude: #9333ea;
+      --gpt: #10b981;
+      --gemini: #3b82f6;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      line-height: 1.6;
+      color: var(--dark);
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    header {
+      background: white;
+      border-radius: 20px;
+      padding: 40px;
+      margin-bottom: 30px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      text-align: center;
+    }
+
+    header h1 {
+      font-size: 2.5em;
+      color: var(--primary);
+      margin-bottom: 10px;
+    }
+
+    header .subtitle {
+      font-size: 1.2em;
+      color: #64748b;
+      margin-bottom: 20px;
+    }
+
+    header .version {
+      display: inline-block;
+      background: var(--success);
+      color: white;
+      padding: 8px 20px;
+      border-radius: 20px;
+      font-weight: bold;
+      font-size: 0.9em;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .tab-button {
+      background: white;
+      border: none;
+      padding: 15px 30px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 1em;
+      font-weight: 600;
+      transition: all 0.3s;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+
+    .tab-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+    }
+
+    .tab-button.active {
+      background: var(--primary);
+      color: white;
+    }
+
+    .tab-content {
+      display: none;
+      background: white;
+      border-radius: 20px;
+      padding: 40px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      animation: fadeIn 0.3s;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    h2 {
+      color: var(--primary);
+      font-size: 2em;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 3px solid var(--primary);
+    }
+
+    h3 {
+      color: var(--dark);
+      font-size: 1.5em;
+      margin-top: 30px;
+      margin-bottom: 15px;
+    }
+
+    h4 {
+      color: var(--primary);
+      font-size: 1.2em;
+      margin-top: 20px;
+      margin-bottom: 10px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    th {
+      background: var(--primary);
+      color: white;
+      padding: 15px;
+      text-align: left;
+      font-weight: 600;
+    }
+
+    td {
+      padding: 15px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    tr:hover {
+      background: #f8fafc;
+    }
+
+    .comparison-table th:nth-child(1) { background: var(--dark); }
+    .comparison-table th:nth-child(2) { background: var(--claude); }
+    .comparison-table th:nth-child(3) { background: var(--gpt); }
+    .comparison-table th:nth-child(4) { background: var(--gemini); }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 0.85em;
+      font-weight: 600;
+      margin: 2px;
+    }
+
+    .badge-success { background: #d1fae5; color: #065f46; }
+    .badge-warning { background: #fef3c7; color: #92400e; }
+    .badge-danger { background: #fee2e2; color: #991b1b; }
+    .badge-info { background: #dbeafe; color: #1e40af; }
+    .badge-primary { background: #e0e7ff; color: #3730a3; }
+
+    .card {
+      background: var(--light);
+      border-radius: 12px;
+      padding: 25px;
+      margin: 20px 0;
+      border-left: 5px solid var(--primary);
+    }
+
+    .card-claude { border-left-color: var(--claude); }
+    .card-gpt { border-left-color: var(--gpt); }
+    .card-gemini { border-left-color: var(--gemini); }
+    .card-success { border-left-color: var(--success); }
+    .card-warning { border-left-color: var(--warning); }
+    .card-danger { border-left-color: var(--danger); }
+
+    .card h4 {
+      margin-top: 0;
+    }
+
+    .architecture-diagram {
+      background: white;
+      border: 2px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 30px;
+      margin: 20px 0;
+      text-align: center;
+      font-family: monospace;
+      white-space: pre;
+      line-height: 1.8;
+      overflow-x: auto;
+    }
+
+    .flow-box {
+      display: inline-block;
+      background: var(--primary);
+      color: white;
+      padding: 10px 20px;
+      border-radius: 8px;
+      margin: 5px;
+      font-weight: 600;
+    }
+
+    .flow-box-claude { background: var(--claude); }
+    .flow-box-gpt { background: var(--gpt); }
+    .flow-box-gemini { background: var(--gemini); }
+
+    .timeline {
+      position: relative;
+      padding-left: 40px;
+      margin: 30px 0;
+    }
+
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 15px;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: var(--primary);
+    }
+
+    .timeline-item {
+      position: relative;
+      margin-bottom: 30px;
+      padding: 20px;
+      background: var(--light);
+      border-radius: 12px;
+    }
+
+    .timeline-item::before {
+      content: '';
+      position: absolute;
+      left: -31px;
+      top: 25px;
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      background: var(--primary);
+      border: 4px solid white;
+    }
+
+    .code-block {
+      background: #1e293b;
+      color: #e2e8f0;
+      padding: 20px;
+      border-radius: 12px;
+      overflow-x: auto;
+      margin: 20px 0;
+      font-family: 'Monaco', 'Consolas', monospace;
+      font-size: 0.9em;
+      line-height: 1.6;
+    }
+
+    .code-block .comment { color: #6b7280; }
+    .code-block .keyword { color: #60a5fa; }
+    .code-block .string { color: #34d399; }
+    .code-block .function { color: #fbbf24; }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin: 20px 0;
+    }
+
+    .metric {
+      background: var(--light);
+      padding: 25px;
+      border-radius: 12px;
+      text-align: center;
+      border-top: 4px solid var(--primary);
+    }
+
+    .metric-value {
+      font-size: 2.5em;
+      font-weight: bold;
+      color: var(--primary);
+      margin-bottom: 10px;
+    }
+
+    .metric-label {
+      color: #64748b;
+      font-size: 0.9em;
+    }
+
+    .alert {
+      padding: 20px;
+      border-radius: 12px;
+      margin: 20px 0;
+      border-left: 5px solid;
+    }
+
+    .alert-info {
+      background: #dbeafe;
+      border-color: #3b82f6;
+      color: #1e40af;
+    }
+
+    .alert-success {
+      background: #d1fae5;
+      border-color: #10b981;
+      color: #065f46;
+    }
+
+    .alert-warning {
+      background: #fef3c7;
+      border-color: #f59e0b;
+      color: #92400e;
+    }
+
+    .alert-danger {
+      background: #fee2e2;
+      border-color: #ef4444;
+      color: #991b1b;
+    }
+
+    ul, ol {
+      margin: 15px 0;
+      padding-left: 30px;
+    }
+
+    li {
+      margin: 8px 0;
+    }
+
+    strong {
+      color: var(--primary);
+    }
+
+    .ai-opinion {
+      margin: 20px 0;
+      padding: 20px;
+      border-radius: 12px;
+      border-left: 5px solid;
+    }
+
+    .ai-opinion-claude {
+      background: #faf5ff;
+      border-color: var(--claude);
+    }
+
+    .ai-opinion-gpt {
+      background: #f0fdf4;
+      border-color: var(--gpt);
+    }
+
+    .ai-opinion-gemini {
+      background: #eff6ff;
+      border-color: var(--gemini);
+    }
+
+    .ai-opinion-header {
+      font-size: 1.2em;
+      font-weight: bold;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .ai-icon {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+    }
+
+    .ai-icon-claude { background: var(--claude); }
+    .ai-icon-gpt { background: var(--gpt); }
+    .ai-icon-gemini { background: var(--gemini); }
+
+    .pros-cons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin: 20px 0;
+    }
+
+    .pros, .cons {
+      padding: 20px;
+      border-radius: 12px;
+    }
+
+    .pros {
+      background: #d1fae5;
+      border-left: 5px solid var(--success);
+    }
+
+    .cons {
+      background: #fee2e2;
+      border-left: 5px solid var(--danger);
+    }
+
+    @media (max-width: 768px) {
+      .pros-cons {
+        grid-template-columns: 1fr;
+      }
+
+      .tabs {
+        flex-direction: column;
+      }
+
+      .tab-button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🚀 転売自動化システム 最終設計書</h1>
+      <p class="subtitle">既存拡張機能統合 × AI協議結果 × 実装ガイド</p>
+      <span class="version">✅ 3者協議版 - 2026-01-31</span>
+    </header>
+
+    <div class="tabs">
+      <button class="tab-button active" onclick="openTab('overview')">📊 全体像</button>
+      <button class="tab-button" onclick="openTab('ai-discussion')">🤖 3者協議</button>
+      <button class="tab-button" onclick="openTab('approach')">🎯 最終アプローチ</button>
+      <button class="tab-button" onclick="openTab('extensions')">🔌 拡張機能詳細</button>
+      <button class="tab-button" onclick="openTab('architecture')">🏗️ アーキテクチャ</button>
+      <button class="tab-button" onclick="openTab('implementation')">💻 実装ガイド</button>
+      <button class="tab-button" onclick="openTab('copilot')">👨‍✈️ コパイロット運用</button>
+      <button class="tab-button" onclick="openTab('cost')">💰 コスト & ROI</button>
+      <button class="tab-button" onclick="openTab('phases')">📅 実装計画</button>
+      <button class="tab-button" onclick="openTab('risks')">⚠️ リスク管理</button>
+    </div>
+
+    <!-- タブ1: 全体像 -->
+    <div id="overview" class="tab-content active">
+      <h2>📊 システム全体像</h2>
+
+      <div class="alert alert-success">
+        <strong>🎯 目標</strong><br>
+        メルカリから500商品/日を自動収集し、AI分析でeBay出品候補を選定。人間レビューは5%のみ（25商品）。コスト79%削減（¥180,000→¥37,000/月）、ROI 624%を実現。
+      </div>
+
+      <h3>📈 処理フロー概要</h3>
+      <div class="metric-grid">
+        <div class="metric">
+          <div class="metric-value">500</div>
+          <div class="metric-label">商品/日</div>
+        </div>
+        <div class="metric">
+          <div class="metric-value">3</div>
+          <div class="metric-label">セッション/日</div>
+        </div>
+        <div class="metric">
+          <div class="metric-value">95%</div>
+          <div class="metric-label">自動化率</div>
+        </div>
+        <div class="metric">
+          <div class="metric-value">0.3%</div>
+          <div class="metric-label">Ban確率</div>
+        </div>
+      </div>
+
+      <h3>🔄 4層フィルタリング</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Layer</th>
+            <th>処理内容</th>
+            <th>使用技術</th>
+            <th>削減率</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Layer 0</strong></td>
+            <td>テキストスクリーニング</td>
+            <td>しらべる君 (OpenAI GPT-4o-mini)</td>
+            <td>500 → 125商品</td>
+          </tr>
+          <tr>
+            <td><strong>Layer 1</strong></td>
+            <td>AI画像分析</td>
+            <td>Claude Vision API</td>
+            <td>125 → 100商品</td>
+          </tr>
+          <tr>
+            <td><strong>Layer 2</strong></td>
+            <td>動的ルーティング</td>
+            <td>信頼度スコア判定</td>
+            <td>自動100 / 人間25</td>
+          </tr>
+          <tr>
+            <td><strong>Layer 3</strong></td>
+            <td>人間レビュー + 学習</td>
+            <td>Few-Shot学習</td>
+            <td>25商品のみ</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>🕐 実行スケジュール（3セッション分散）</h3>
+      <div class="timeline">
+        <div class="timeline-item">
+          <h4>セッション1: 10:12 (±30分ランダム)</h4>
+          <p>170商品 / 13分 / 3並列実行</p>
+        </div>
+        <div class="timeline-item">
+          <h4>5時間待機</h4>
+          <p>人間らしい間隔</p>
+        </div>
+        <div class="timeline-item">
+          <h4>セッション2: 15:08 (±30分ランダム)</h4>
+          <p>170商品 / 13分 / 3並列実行</p>
+        </div>
+        <div class="timeline-item">
+          <h4>6時間待機</h4>
+          <p>人間らしい間隔</p>
+        </div>
+        <div class="timeline-item">
+          <h4>セッション3: 21:15 (±30分ランダム)</h4>
+          <p>160商品 / 14分 / 3並列実行</p>
+        </div>
+      </div>
+
+      <div class="alert alert-warning">
+        <strong>⚠️ 重要</strong><br>
+        ❌ 40分で一気に500商品 → Ban確率90%以上<br>
+        ✅ 3セッション分散 → Ban確率0.3%
+      </div>
+    </div>
+
+    <!-- タブ2: 3者協議 -->
+    <div id="ai-discussion" class="tab-content">
+      <h2>🤖 3者AI協議の結果</h2>
+
+      <div class="alert alert-info">
+        <strong>📌 協議テーマ</strong><br>
+        「既存拡張機能（とりこみ君、みちゃった君、しらべる君）をどう活用するか？専用拡張機能を作るか、機能をプログラムに取り込むか？」
+      </div>
+
+      <h3>🗣️ ラウンド1: 初期提案</h3>
+
+      <div class="ai-opinion ai-opinion-claude">
+        <div class="ai-opinion-header">
+          <div class="ai-icon ai-icon-claude">C</div>
+          Claude Sonnet 4.5
+        </div>
+        <p><strong>提案</strong>: 既存拡張機能をそのまま使用し、Extension Bridge（Puppeteer + WebSocket）で制御</p>
+        <div class="pros-cons">
+          <div class="pros">
+            <h4>✅ メリット</h4>
+            <ul>
+              <li>既に安定稼働（とりこみ君は13サイト対応、290KB）</li>
+              <li>Chrome Web Store再審査不要</li>
+              <li>OpenAI API統合済み（しらべる君）</li>
+              <li>開発工数最小</li>
+            </ul>
+          </div>
+          <div class="cons">
+            <h4>❌ デメリット</h4>
+            <ul>
+              <li>Puppeteer制御が複雑</li>
+              <li>Chrome更新リスク</li>
+              <li>デバッグ困難</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="ai-opinion ai-opinion-gpt">
+        <div class="ai-opinion-header">
+          <div class="ai-icon ai-icon-gpt">G</div>
+          GPT-5
+        </div>
+        <p><strong>提案</strong>: 短期は既存拡張機能活用、長期で段階的にNode.jsへ移植する「二段構え」戦略</p>
+        <div class="pros-cons">
+          <div class="pros">
+            <h4>✅ メリット</h4>
+            <ul>
+              <li>短期の価値（即効性）を確保</li>
+              <li>長期のリスクヘッジ</li>
+              <li>段階的移行でコスト分散</li>
+            </ul>
+          </div>
+          <div class="cons">
+            <h4>❌ デメリット</h4>
+            <ul>
+              <li>二重管理のコスト</li>
+              <li>移行中の複雑性</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="ai-opinion ai-opinion-gemini">
+        <div class="ai-opinion-header">
+          <div class="ai-icon ai-icon-gemini">Ge</div>
+          Gemini
+        </div>
+        <p><strong>提案</strong>: UI操作を避け、メッセージングベースの制御を採用（第3の道）</p>
+        <div class="pros-cons">
+          <div class="pros">
+            <h4>✅ メリット</h4>
+            <ul>
+              <li>UI変更に強い</li>
+              <li>Headlessモード対応</li>
+              <li>デバッグが容易</li>
+              <li>Bot検知を回避</li>
+            </ul>
+          </div>
+          <div class="cons">
+            <h4>❌ デメリット</h4>
+            <ul>
+              <li>拡張機能の小規模改修が必要</li>
+              <li>MV3のService Worker休止対策が必要</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <h3>🗣️ ラウンド2: 技術的詳細化</h3>
+
+      <div class="card card-gemini">
+        <h4>Geminiの追加提案: ステルス化とCI自動化</h4>
+        <ol>
+          <li><strong>通信のステルス化</strong>: window.postMessage禁止、Isolated World内で実行</li>
+          <li><strong>CIパッチ自動適用</strong>: GitHub Actionsで「APIリスナーコード」を自動注入</li>
+          <li><strong>MV3対策</strong>: Service Workerを明示的に起こすシーケンス</li>
+        </ol>
+      </div>
+
+      <div class="card card-gpt">
+        <h4>GPTの同意と補強</h4>
+        <p>メッセージングAPI化に同意。さらに以下を追加：</p>
+        <ul>
+          <li>抽出ルールの外部化（Config化）</li>
+          <li>審査依存を下げる</li>
+          <li>壊れやすい部分から段階移植</li>
+        </ul>
+      </div>
+
+      <h3>🗣️ ラウンド3: 運用戦略</h3>
+
+      <div class="card card-danger">
+        <h4>Geminiの重要指摘: 完全自動化の罠</h4>
+        <p><strong>最大のリスクは「ツールの不具合」ではなく「アカウント凍結（BAN）」</strong></p>
+        <p>→ 提案: <strong>コパイロット型</strong>（有人監視前提）</p>
+        <ul>
+          <li>Headedモード（画面あり）での運用</li>
+          <li>Human Handoff（CAPTCHA時に人間に委譲）</li>
+          <li>ブラウザプロファイルの「育成」（Trust Score向上）</li>
+          <li>ダブルチェック（異常値検知）</li>
+        </ul>
+      </div>
+
+      <h3>📋 最終合意事項</h3>
+
+      <table class="comparison-table">
+        <thead>
+          <tr>
+            <th>項目</th>
+            <th>Claude</th>
+            <th>GPT</th>
+            <th>Gemini</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>技術アプローチ</strong></td>
+            <td>Extension Bridge</td>
+            <td>メッセージングAPI化</td>
+            <td>メッセージングAPI化</td>
+          </tr>
+          <tr>
+            <td><strong>運用形態</strong></td>
+            <td>Headless自動化</td>
+            <td>段階的移行</td>
+            <td>コパイロット型</td>
+          </tr>
+          <tr>
+            <td><strong>長期戦略</strong></td>
+            <td>既存拡張機能維持</td>
+            <td>Node.js段階移植</td>
+            <td>プロファイル育成</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="alert alert-success">
+        <strong>✅ 最終的な合意</strong><br>
+        1. <strong>技術</strong>: メッセージングAPI化（UI操作は避ける）<br>
+        2. <strong>運用</strong>: コパイロット型（完全自動ではなく有人監視）<br>
+        3. <strong>戦略</strong>: 既存拡張機能に小規模改修 → 段階的にNode.jsへ移植
+      </div>
+
+      <!-- ======================================== -->
+      <!-- 用語解説セクション -->
+      <!-- ======================================== -->
+      <h2 style="margin-top:60px; border-bottom-color: var(--warning);">📖 用語解説（この資料に出てくる言葉）</h2>
+
+      <div class="alert alert-info">
+        <strong>💡 読み方ガイド</strong><br>
+        上の協議では多くの専門用語が出てきます。ここでは「たとえ話」を使って、全ての用語を噛み砕いて解説します。
+      </div>
+
+      <!-- ---- 基本概念 ---- -->
+      <h3>🔤 基本概念</h3>
+
+      <div class="card">
+        <h4>Extension Bridge（エクステンション ブリッジ）</h4>
+        <p><strong>一言で</strong>: 「Vibe Hive」と「Chrome拡張機能」をつなぐ<strong>通訳係</strong></p>
+        <p><strong>たとえ</strong>: 日本語しか話せない社長（Vibe Hive）と、英語しか話せない現場スタッフ（とりこみ君等）がいるとします。その間に立って、両者の言葉を翻訳する通訳者が Extension Bridge です。</p>
+        <p><strong>具体的に何をするか</strong>:</p>
+        <ul>
+          <li>Vibe Hiveから「170商品スクレイピングして」という指示を受け取る</li>
+          <li>とりこみ君に「この商品のデータを取って」と伝える</li>
+          <li>とりこみ君が取得したデータをVibe Hiveに返す</li>
+        </ul>
+        <p><strong>技術的には</strong>: Node.jsで書かれたプログラムで、Puppeteerというツールを使ってChromeブラウザを操作します。</p>
+      </div>
+
+      <div class="card">
+        <h4>メッセージングAPI化</h4>
+        <p><strong>一言で</strong>: 拡張機能に<strong>「命令を受け付ける窓口」を追加する</strong>こと</p>
+        <p><strong>たとえ</strong>: レストランで料理を注文する方法が2つあるとします。</p>
+        <ul>
+          <li>❌ <strong>UI操作方式</strong>: 厨房に侵入して、自分でフライパンを振る（壊れやすい、迷惑）</li>
+          <li>✅ <strong>メッセージング方式</strong>: メニュー表から注文し、できた料理を受け取る（安全、確実）</li>
+        </ul>
+        <p>今の拡張機能は「人間がボタンを押して使う」設計です。メッセージングAPI化とは、「プログラムから命令を送ると、自動で結果を返してくれる窓口」を追加することです。</p>
+        <p><strong>Extension Bridgeとの違い</strong>:</p>
+        <ul>
+          <li><strong>メッセージングAPI化</strong> = 拡張機能に「注文窓口」を作る工事</li>
+          <li><strong>Extension Bridge</strong> = その窓口に注文を出す「配達員」プログラム</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h4>UI操作 / ボタンクリック方式</h4>
+        <p><strong>一言で</strong>: プログラムが<strong>人間のフリをして画面のボタンを押す</strong>方式</p>
+        <p><strong>たとえ</strong>: 自動販売機のボタンを、ロボットアームで物理的に押す感じ。ボタンの位置が変わったらロボットは空振りします。</p>
+        <p><strong>なぜダメか</strong>:</p>
+        <ul>
+          <li>サイトのデザインが変わるとすぐ壊れる</li>
+          <li>メルカリ側から「これロボットだな」とバレやすい</li>
+          <li>エラーが起きた時に原因を特定しにくい</li>
+        </ul>
+      </div>
+
+      <!-- ---- ツール・技術 ---- -->
+      <h3>🛠️ ツール・技術</h3>
+
+      <div class="card">
+        <h4>Puppeteer（パペティア）</h4>
+        <p><strong>一言で</strong>: <strong>Chromeブラウザを自動で操る操り人形師</strong></p>
+        <p><strong>たとえ</strong>: あなたの代わりにChromeを開いて、URLを入力して、ページをスクロールして、データを読み取ってくれるロボット。Google公式のツールです。</p>
+        <p><strong>このシステムでの役割</strong>:</p>
+        <ul>
+          <li>Chromeブラウザを起動する</li>
+          <li>とりこみ君等の拡張機能をブラウザに読み込む</li>
+          <li>メルカリのページを開く</li>
+          <li>拡張機能にメッセージを送る</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h4>WebSocket（ウェブソケット）</h4>
+        <p><strong>一言で</strong>: プログラム同士の<strong>常時接続電話回線</strong></p>
+        <p><strong>たとえ</strong>: 普通のウェブ通信（HTTP）は手紙のやりとり。送って、返事を待って、また送る。WebSocketは電話。一度つながったら、いつでもリアルタイムに会話できる。</p>
+        <p><strong>このシステムでの役割</strong>:</p>
+        <ul>
+          <li>Vibe Hive ↔ Extension Bridge 間のリアルタイム通信</li>
+          <li>「次の商品を処理して」「完了しました」というやりとりを高速で行う</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h4>Node.js（ノード ジェイエス）</h4>
+        <p><strong>一言で</strong>: <strong>JavaScriptをPC上で動かすための実行環境</strong></p>
+        <p><strong>たとえ</strong>: JavaScriptは本来ブラウザの中でしか動きません。Node.jsがあると、ブラウザなしでPCのデスクトップ上でJavaScriptプログラムを動かせます。</p>
+        <p><strong>このシステムでの役割</strong>: Extension Bridgeを動かす基盤。Vibe Hive自体もNode.js（Electron）で動いています。</p>
+      </div>
+
+      <div class="card">
+        <h4>Chrome拡張機能（Extension）</h4>
+        <p><strong>一言で</strong>: <strong>Chromeブラウザに追加できるミニアプリ</strong></p>
+        <p><strong>たとえ</strong>: スマホにアプリを入れるように、ChromeにもChromeウェブストアから機能を追加できます。とりこみ君、みちゃった君、しらべる君はすべてChrome拡張機能です。</p>
+      </div>
+
+      <div class="card">
+        <h4>Content Script（コンテント スクリプト）</h4>
+        <p><strong>一言で</strong>: <strong>ウェブページの中に入り込んで動くプログラム</strong></p>
+        <p><strong>たとえ</strong>: メルカリのページを開いた時に、こっそり拡張機能のプログラムがそのページの中に入り込んで、商品名や価格を読み取ります。とりこみ君の content.js（290KB）がこれです。</p>
+      </div>
+
+      <div class="card">
+        <h4>background.js（バックグラウンド スクリプト）/ Service Worker</h4>
+        <p><strong>一言で</strong>: <strong>拡張機能の「裏方マネージャー」</strong></p>
+        <p><strong>たとえ</strong>: Content Scriptが「現場作業員」なら、background.jsは「事務所にいるマネージャー」。現場からのデータを受け取り、OpenAI APIへの問い合わせなど、裏方の処理を行います。</p>
+        <p><strong>MV3の問題</strong>: 最新のChrome（Manifest V3）では、このマネージャーが一定時間仕事がないと<strong>居眠り</strong>してしまいます。命令を送る前に「起きて！」と呼びかける処理が必要です。</p>
+      </div>
+
+      <div class="card">
+        <h4>chrome.runtime.sendMessage</h4>
+        <p><strong>一言で</strong>: <strong>拡張機能内部の「社内メール」機能</strong></p>
+        <p><strong>たとえ</strong>: Content Script（現場）からbackground.js（事務所）にメッセージを送る仕組み。「商品データを取ったよ」「翻訳してください」というやりとりに使います。メッセージングAPI化では、この仕組みを外部（Extension Bridge）からも使えるようにします。</p>
+      </div>
+
+      <!-- ---- セキュリティ・検知回避 ---- -->
+      <h3>🛡️ セキュリティ・Bot検知回避</h3>
+
+      <div class="card">
+        <h4>Bot検知（ボット検知）</h4>
+        <p><strong>一言で</strong>: <strong>「このアクセスはロボットだ」とサイト側が見破る仕組み</strong></p>
+        <p><strong>たとえ</strong>: テーマパークの入口に立っている警備員。動きが不自然な人（ロボット）を見つけて入場拒否します。メルカリやeBayにも同じ仕組みがあります。</p>
+        <p><strong>検知される行動パターン</strong>:</p>
+        <ul>
+          <li>超高速でページを移動する</li>
+          <li>毎回まったく同じ間隔でクリックする</li>
+          <li>Cookie（足跡）がまったくないブラウザでアクセスする</li>
+          <li>同じIPアドレスから大量にアクセスする</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h4>Residential Proxy（レジデンシャル プロキシ）</h4>
+        <p><strong>一言で</strong>: <strong>一般家庭のインターネット回線を経由してアクセスする仕組み</strong></p>
+        <p><strong>たとえ</strong>: あなたが直接メルカリにアクセスすると、IPアドレス（ネット上の住所）でバレます。Residential Proxyは、世界中の一般家庭のWi-Fiを借りてアクセスするので、「普通のユーザーがアクセスしている」ように見えます。</p>
+        <p><strong>なぜ必要か</strong>: メルカリは「同じIPアドレスから短時間に大量アクセス」を検知します。Proxyを使うと毎回違う住所からアクセスしているように見えるため、検知を回避できます。</p>
+        <p><strong>Smartproxy</strong>: Residential Proxyを提供するサービスの名前。月額約$90（13,500円）。</p>
+      </div>
+
+      <div class="card">
+        <h4>CAPTCHA（キャプチャ）</h4>
+        <p><strong>一言で</strong>: <strong>「私はロボットではありません」の確認画面</strong></p>
+        <p><strong>たとえ</strong>: 「信号機の画像をすべて選んでください」「歪んだ文字を入力してください」というアレ。ロボットには解けない（はず）の問題を出して、人間かどうか確認します。</p>
+        <p><strong>なぜ問題か</strong>: 自動化システムはCAPTCHAを解けません。出現したら人間が手動で解く必要があります。これがコパイロット型が必要な理由の一つです。</p>
+      </div>
+
+      <div class="card">
+        <h4>Isolated World（アイソレーテッド ワールド）</h4>
+        <p><strong>一言で</strong>: <strong>拡張機能だけが見える「隠し部屋」</strong></p>
+        <p><strong>たとえ</strong>: メルカリのページには、メルカリ自身のプログラムと、拡張機能のプログラムが同時に存在します。Isolated Worldは「拡張機能専用の隔離された部屋」で、メルカリ側のプログラムからは見えません。</p>
+        <p><strong>なぜ重要か</strong>: ここで通信すれば、メルカリのBot検知スクリプトに「自動化ツールが動いている」とバレません。</p>
+      </div>
+
+      <div class="card">
+        <h4>Headless / Headed モード</h4>
+        <p><strong>一言で</strong>:</p>
+        <ul>
+          <li><strong>Headless（ヘッドレス）</strong>: 画面なしでブラウザを動かす（見えない）</li>
+          <li><strong>Headed（ヘッデッド）</strong>: 画面ありでブラウザを動かす（見える）</li>
+        </ul>
+        <p><strong>たとえ</strong>: Headlessは「目隠しで料理する」。効率は良いが、失敗に気づかない。Headedは「目を開けて料理する」。人間が見ているので安全。</p>
+        <p><strong>このシステムでは</strong>: 必ずHeaded（画面あり）で動かします。CAPTCHAが出た時に人間が気づけるように。</p>
+      </div>
+
+      <div class="card">
+        <h4>ブラウザプロファイル / Trust Score</h4>
+        <p><strong>一言で</strong>:</p>
+        <ul>
+          <li><strong>ブラウザプロファイル</strong>: Chromeに保存される履歴・Cookie・設定のかたまり</li>
+          <li><strong>Trust Score</strong>: サイト側が「このユーザーはどれくらい信頼できるか」を判断するスコア</li>
+        </ul>
+        <p><strong>たとえ</strong>: 銀行の信用スコアのようなもの。長く使っているアカウント、普段からブラウジングしているブラウザは「信頼できる」と判断されます。逆に、まっさらな新しいブラウザは「怪しい」と判断されます。</p>
+        <p><strong>育成方法</strong>: 自動化に使うChromeプロファイルで、日頃からYouTubeを見たり、ニュースを読んだりして「普通のユーザー」の履歴を作ります。</p>
+      </div>
+
+      <div class="card">
+        <h4>User-Agent（ユーザーエージェント）</h4>
+        <p><strong>一言で</strong>: <strong>ブラウザが自己紹介する名刺</strong></p>
+        <p><strong>たとえ</strong>: あなたがウェブサイトにアクセスすると、ブラウザが自動的に「私はMacのChrome 120です」と名乗ります。Puppeteerのデフォルトは「HeadlessChrome」と名乗ってしまうので、「普通のChrome」に偽装します。</p>
+      </div>
+
+      <!-- ---- 運用・戦略 ---- -->
+      <h3>📋 運用・戦略</h3>
+
+      <div class="card">
+        <h4>コパイロット型（Co-Pilot）</h4>
+        <p><strong>一言で</strong>: <strong>AIが操縦し、人間が監視する「半自動」運用</strong></p>
+        <p><strong>たとえ</strong>: 飛行機の自動操縦。離陸と着陸はパイロット（人間）が行い、巡航中はオートパイロット（AI）が操縦。異常があればパイロットがすぐに介入します。</p>
+        <p><strong>具体的には</strong>:</p>
+        <ul>
+          <li>AIが13分間メルカリの商品をスクレイピング</li>
+          <li>人間はPCの前で画面を見ている（監視）</li>
+          <li>CAPTCHAが出たり、エラーが起きたら人間が操作</li>
+          <li>1日3回、各13分間 = 人間の拘束時間は約40分/日</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h4>Human Handoff（ヒューマン ハンドオフ）</h4>
+        <p><strong>一言で</strong>: <strong>AIが「お手上げ」の時に人間にバトンタッチすること</strong></p>
+        <p><strong>たとえ</strong>: コールセンターの自動音声対応。「1を押してください」で解決できない問題は、オペレーター（人間）につなぎますよね。それと同じです。</p>
+        <p><strong>いつ発生するか</strong>:</p>
+        <ul>
+          <li>CAPTCHAが表示された</li>
+          <li>未知のポップアップが出た</li>
+          <li>ログインが必要になった</li>
+          <li>ページ構造が変わってデータが取れない</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h4>ランダムジッター / ランダム遅延</h4>
+        <p><strong>一言で</strong>: <strong>わざと「ばらつき」を入れて人間らしく振る舞う</strong></p>
+        <p><strong>たとえ</strong>:</p>
+        <ul>
+          <li><strong>ランダム遅延</strong>: 商品を1つ見るたびに2〜4秒待つ（毎回時間が違う）。人間は機械のように正確に2秒ごとにクリックしないので、バラつきを入れます。</li>
+          <li><strong>ランダムジッター</strong>: セッション開始時刻を±30分ずらす。毎日10:12ぴったりに開始すると「機械的」とバレるので、ある日は9:50、別の日は10:35に開始します。</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h4>Ban（バン）/ アカウント凍結</h4>
+        <p><strong>一言で</strong>: <strong>サイトから追放されること</strong></p>
+        <p><strong>たとえ</strong>: 出入り禁止。メルカリが「このアカウントはロボットだ」と判断すると、そのアカウントが使えなくなります。最悪の場合、出品中の商品も全て削除されます。</p>
+        <p><strong>回復の難しさ</strong>: 一度Banされると復帰はほぼ不可能。新しいアカウントを作っても、同じブラウザ/IPからアクセスするとすぐにまたBanされます。</p>
+      </div>
+
+      <!-- ---- AI・分析 ---- -->
+      <h3>🤖 AI・分析</h3>
+
+      <div class="card">
+        <h4>Layer 0〜3（レイヤー）/ 4層フィルタリング</h4>
+        <p><strong>一言で</strong>: <strong>500商品を段階的にふるいにかけて、良い商品だけを残す仕組み</strong></p>
+        <p><strong>たとえ</strong>: 金の採掘と同じ。</p>
+        <ul>
+          <li><strong>Layer 0（粗いふるい）</strong>: 砂と石を分ける → テキスト（商品名・価格）だけで明らかにダメなものを除外。500 → 125商品に。</li>
+          <li><strong>Layer 1（細かいふるい）</strong>: 石から金を探す → AI画像分析で商品状態を確認。125 → 100商品に。</li>
+          <li><strong>Layer 2（振り分け）</strong>: 自信がある金は即出荷、怪しいものは鑑定士へ → AIが自信のある商品は自動処理、微妙なものは人間レビューへ。</li>
+          <li><strong>Layer 3（鑑定）</strong>: 人間の鑑定士が最終判断 → 25商品だけ人間がチェック。その結果をAIが学習。</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h4>Claude Vision API / OpenAI API</h4>
+        <p><strong>一言で</strong>: <strong>AIに質問を送ると答えが返ってくるサービス</strong></p>
+        <ul>
+          <li><strong>OpenAI API（GPT-4o-mini）</strong>: しらべる君が使用中。商品名を英語に翻訳したり、ブランドを判定したりする。テキスト専門。</li>
+          <li><strong>Claude Vision API</strong>: 新しく追加。商品画像を見て「これは美品か、傷ありか、偽物か」を判断する。画像も理解できるAI。</li>
+        </ul>
+        <p><strong>コスト</strong>: OpenAI = 0.05円/回、Claude Vision = 1.86円/回。画像分析のほうが高い。</p>
+      </div>
+
+      <div class="card">
+        <h4>Few-Shot学習（フューショット）</h4>
+        <p><strong>一言で</strong>: <strong>AIに「お手本」を見せて精度を上げる方法</strong></p>
+        <p><strong>たとえ</strong>: 新人バイトに「こういう商品は仕入れてOK」「こういう商品はNG」と10個ずつ例を見せて教えるのと同じ。AIにも「良い例」「悪い例」を見せると判断精度が上がります。</p>
+        <p><strong>学習ループ</strong>: Layer 3で人間が判断した結果を「お手本」としてAIに蓄積していく。使えば使うほど賢くなる。</p>
+      </div>
+
+      <div class="card">
+        <h4>信頼度スコア（Confidence Score）</h4>
+        <p><strong>一言で</strong>: <strong>AIが「自分の判断にどれくらい自信があるか」を示す数値（0.0〜1.0）</strong></p>
+        <p><strong>たとえ</strong>:</p>
+        <ul>
+          <li><strong>0.95</strong>: 「これは確実にエルメスのスカーフです！」→ 自動処理OK</li>
+          <li><strong>0.75</strong>: 「たぶんエルメスだと思うけど…」→ 人間に確認</li>
+          <li><strong>0.30</strong>: 「よくわからない…」→ 除外</li>
+        </ul>
+        <p><strong>閾値（しきいち）0.8</strong>: このシステムでは0.8以上なら自動処理、0.6〜0.8なら人間レビュー、0.6未満なら除外します。</p>
+      </div>
+
+      <!-- ---- 開発・運用 ---- -->
+      <h3>⚙️ 開発・運用</h3>
+
+      <div class="card">
+        <h4>Manifest V3（マニフェスト ブイスリー / MV3）</h4>
+        <p><strong>一言で</strong>: <strong>Chrome拡張機能の最新の設計ルール</strong></p>
+        <p><strong>たとえ</strong>: 建築基準法の改正のようなもの。Googleが「拡張機能はこのルールで作ってね」と定めた最新版がV3。V2より安全だが、制約が増えた。</p>
+        <p><strong>問題点</strong>: V3ではbackground.js（Service Worker）が一定時間で自動的に停止する。命令を送る前に「起こす」処理が必要。</p>
+      </div>
+
+      <div class="card">
+        <h4>CI / GitHub Actions（シーアイ / ギットハブ アクションズ）</h4>
+        <p><strong>一言で</strong>: <strong>コードの変更を自動でチェック・ビルドする仕組み</strong></p>
+        <p><strong>たとえ</strong>: 工場の品質管理ライン。製品（コード）が変更されるたびに、自動で検査を行い、問題がなければ出荷（デプロイ）します。</p>
+        <p><strong>このシステムでの用途</strong>: 拡張機能の元コードが更新された時に、「API口のコード」を自動で追加してパッケージングする。</p>
+      </div>
+
+      <div class="card">
+        <h4>Config外部化（コンフィグ がいぶか）</h4>
+        <p><strong>一言で</strong>: <strong>設定や条件をプログラムの外に出して、簡単に変更できるようにすること</strong></p>
+        <p><strong>たとえ</strong>: レシピ本。料理（プログラム）を変えなくても、レシピ（Config）を差し替えれば違う料理が作れる。</p>
+        <p><strong>メリット</strong>: メルカリがHTMLの構造を変えても、Configファイル（CSSセレクタ等）だけ書き換えれば対応可能。プログラム本体を修正する必要がない。</p>
+      </div>
+
+      <div class="card">
+        <h4>フォールバック（Fallback）</h4>
+        <p><strong>一言で</strong>: <strong>失敗した時の「代替案」「保険」</strong></p>
+        <p><strong>たとえ</strong>: メインの道路が渋滞（障害）した時の迂回路。OpenAI APIが障害で使えなくなっても、Claude APIに自動で切り替える、という仕組みです。</p>
+      </div>
+
+      <div class="card">
+        <h4>E2Eテスト（イーツーイー）</h4>
+        <p><strong>一言で</strong>: <strong>最初から最後まで通しで動作確認すること</strong></p>
+        <p><strong>たとえ</strong>: 工場でパーツ1つ1つを検査するのではなく、完成品を実際に使ってみて問題ないか確認すること。E2Eは「End to End（端から端まで）」の略。</p>
+        <p><strong>このシステムでは</strong>: 「Vibe Hiveからスクレイピング指示 → 拡張機能がデータ取得 → AI分析 → 結果保存」の全工程を10商品で通して動作確認します。</p>
+      </div>
+
+      <div class="card">
+        <h4>ROI（アールオーアイ）</h4>
+        <p><strong>一言で</strong>: <strong>「投資に対してどれくらい得したか」を示す指標</strong></p>
+        <p><strong>たとえ</strong>: 100万円投資して400万円の利益が出たら、ROIは400%。</p>
+        <p><strong>このシステムでは</strong>: AI統合システムに月37,000円かけて、人間だけの場合（月180,000円）より143,000円節約 → ROI 386%。つまり<strong>投資額の約4倍の節約効果</strong>があるということ。</p>
+      </div>
+
+      <div class="card">
+        <h4>node-cron（ノード クロン）</h4>
+        <p><strong>一言で</strong>: <strong>プログラムに「目覚まし時計」を設定するツール</strong></p>
+        <p><strong>たとえ</strong>: 「毎日10:12に起こして」「毎日15:08にもう1回起こして」と設定できるアラーム。このシステムでは3つのセッション（10:12、15:08、21:15）を自動で開始するために使います。</p>
+      </div>
+
+      <div class="card">
+        <h4>SQLite（エスキューライト）</h4>
+        <p><strong>一言で</strong>: <strong>PCの中に作れる小さなデータベース</strong></p>
+        <p><strong>たとえ</strong>: Excelのスプレッドシートみたいなもの。ただし、プログラムから高速に読み書きできる。Vibe Hiveがセッション情報やスクレイピング結果を保存するのに使います。</p>
+      </div>
+
+    </div>
+
+    <!-- タブ3: 最終アプローチ -->
+    <div id="approach" class="tab-content">
+      <h2>🎯 最終アプローチ決定版</h2>
+
+      <div class="alert alert-success">
+        <strong>📌 採用するアプローチ</strong><br>
+        <strong>「メッセージングAPI化 + コパイロット型運用」</strong>
+      </div>
+
+      <h3>🔧 3つのアプローチ比較</h3>
+
+      <table>
+        <thead>
+          <tr>
+            <th>アプローチ</th>
+            <th>メリット</th>
+            <th>デメリット</th>
+            <th>採用</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>①専用拡張機能を新規開発</strong></td>
+            <td>完全制御可能、カスタマイズ自由</td>
+            <td>開発工数大（290KB再実装）、審査必要</td>
+            <td>❌</td>
+          </tr>
+          <tr>
+            <td><strong>②既存拡張機能をそのまま使用（UI操作）</strong></td>
+            <td>改修不要、即開始可能</td>
+            <td>Puppeteer制御が脆弱、Chrome更新リスク</td>
+            <td>❌</td>
+          </tr>
+          <tr>
+            <td><strong>③既存拡張機能に小規模改修（メッセージングAPI化）</strong></td>
+            <td>安定性高、デバッグ容易、Bot検知回避</td>
+            <td>小規模改修が必要（1週間程度）</td>
+            <td>✅ 採用</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>📐 採用アプローチの詳細</h3>
+
+      <div class="card card-success">
+        <h4>✅ 何をするか</h4>
+        <ol>
+          <li><strong>既存拡張機能に「API口」を追加</strong>
+            <ul>
+              <li>とりこみ君、みちゃった君、しらべる君に「メッセージリスナー」を追加</li>
+              <li>UI操作（ボタンクリック）ではなく、コマンド送信で制御</li>
+              <li>改修規模: 各拡張機能50-100行程度</li>
+            </ul>
+          </li>
+          <li><strong>Extension Bridgeサービスを構築</strong>
+            <ul>
+              <li>Node.js + Puppeteer + WebSocket</li>
+              <li>Vibe Hiveとの橋渡し役</li>
+              <li>拡張機能にコマンドを送信し、結果を受信</li>
+            </ul>
+          </li>
+          <li><strong>コパイロット型で運用</strong>
+            <ul>
+              <li>完全自動ではなく、画面ありで人間が監視</li>
+              <li>CAPTCHA等の例外時に人間が介入</li>
+              <li>ブラウザプロファイルを育てる</li>
+            </ul>
+          </li>
+        </ol>
+      </div>
+
+      <h3>🏗️ アーキテクチャ図</h3>
+
+      <div class="architecture-diagram">
+┌────────────────────────────────────────┐
+│        Vibe Hive (Scheduler)         │
+│   - node-cron（3セッション管理）      │
+│   - WebSocket Client                 │
+└──────────────┬─────────────────────────┘
+               │ WebSocket
+               ▼
+┌────────────────────────────────────────┐
+│    Extension Bridge Service          │
+│   - Node.js + Puppeteer              │
+│   - WebSocket Server (port 9876)    │
+│   - メッセージング制御                 │
+└──────┬────────┬────────┬────────────────┘
+       │        │        │
+       ▼        ▼        ▼
+┌──────────┐ ┌──────────┐ ┌──────────┐
+│とりこみ君│ │みちゃった│ │しらべる君│
+│ (改修)   │ │  君(改修)│ │  (改修)  │
+│ API口追加│ │ API口追加│ │ API口追加│
+└────┬─────┘ └────┬─────┘ └────┬─────┘
+     │            │            │
+     └────────────┴────────────┘
+                  │
+                  ▼
+          ┌───────────────┐
+          │   メルカリ    │
+          └───────────────┘
+      </div>
+
+      <h3>💡 なぜこのアプローチか</h3>
+
+      <div class="card card-info">
+        <h4>1. 安定性が高い</h4>
+        <p>UI操作（ボタンクリック）は、サイトのHTML変更で簡単に壊れる。メッセージング制御なら、内部ロジックを直接呼べるので堅牢。</p>
+      </div>
+
+      <div class="card card-info">
+        <h4>2. Bot検知を回避</h4>
+        <p>window.postMessageは対象サイトに見えてしまう。Isolated World内での実行なら、メルカリ側のJavaScriptから検知されない。</p>
+      </div>
+
+      <div class="card card-info">
+        <h4>3. デバッグが容易</h4>
+        <p>「extractData」「checkDuplicate」といった明示的なコマンドなので、ログが読みやすく、トラブルシューティングが簡単。</p>
+      </div>
+
+      <div class="card card-info">
+        <h4>4. 既存資産を活用</h4>
+        <p>とりこみ君の290KBのスクレイピングロジックをそのまま使える。再実装不要。</p>
+      </div>
+
+      <div class="card card-info">
+        <h4>5. 段階的移行が可能</h4>
+        <p>将来Node.jsに移植する際も、API仕様が明確なので移行が容易。</p>
+      </div>
+    </div>
+
+    <!-- タブ4: 拡張機能詳細 -->
+    <div id="extensions" class="tab-content">
+      <h2>🔌 既存拡張機能の詳細分析</h2>
+
+      <h3>1️⃣ とりこみ君 (v1.2.2) - 最重要</h3>
+
+      <div class="card">
+        <h4>📋 基本情報</h4>
+        <p><strong>場所</strong>: ~/Desktop/とりこみ君/</p>
+        <p><strong>バージョン</strong>: 1.2.2</p>
+        <p><strong>Manifest</strong>: v3</p>
+        <p><strong>主要ファイル</strong>: content.js (290KB)</p>
+      </div>
+
+      <div class="card card-success">
+        <h4>✅ 主要機能</h4>
+        <ul>
+          <li><strong>13サイト対応</strong>: eBay, メルカリ, Amazon, 楽天, Yahoo, PayPayフリマ, ラクマ等</li>
+          <li><strong>商品データ抽出</strong>: タイトル、価格、画像URL、説明、出品者情報</li>
+          <li><strong>Google Sheets API統合</strong>: 既に実装済み</li>
+          <li><strong>高度なノイズフィルタ</strong>: 支払い、送料、ポイント、レビュー等を自動除外</li>
+        </ul>
+      </div>
+
+      <div class="card card-warning">
+        <h4>🔧 必要な改修（50行程度）</h4>
+        <div class="code-block">
+<span class="comment">// background.jsに追加</span>
+<span class="keyword">chrome.runtime.onMessage</span>.<span class="function">addListener</span>((request, sender, sendResponse) => {
+  <span class="keyword">if</span> (request.<span class="keyword">action</span> === <span class="string">'extractData'</span>) {
+    <span class="comment">// 既存のスクレイピングロジックを呼び出し</span>
+    <span class="keyword">const</span> productData = <span class="function">extractProductData</span>();
+    <span class="function">sendResponse</span>({ <span class="keyword">success</span>: <span class="keyword">true</span>, <span class="keyword">data</span>: productData });
+  }
+  <span class="keyword">return</span> <span class="keyword">true</span>; <span class="comment">// 非同期レスポンス</span>
+});
+        </div>
+      </div>
+
+      <h3>2️⃣ みちゃった君 (v3.1.1) - 重複回避必須</h3>
+
+      <div class="card">
+        <h4>📋 基本情報</h4>
+        <p><strong>場所</strong>: ~/Desktop/みちゃった君/</p>
+        <p><strong>バージョン</strong>: 3.1.1</p>
+        <p><strong>Manifest</strong>: v3</p>
+        <p><strong>ストレージ</strong>: localStorage (michatta_history, 最大10,000件)</p>
+      </div>
+
+      <div class="card card-success">
+        <h4>✅ 主要機能</h4>
+        <ul>
+          <li><strong>閲覧履歴管理</strong>: 最大10,000件の商品IDを保存</li>
+          <li><strong>バッジ表示</strong>: 検索結果に「既読」マークを表示</li>
+          <li><strong>出品者評価取得</strong>: data-testid="seller-link"で高精度抽出</li>
+          <li><strong>「興味なし」マーク</strong>: 除外商品をグレーアウト</li>
+        </ul>
+      </div>
+
+      <div class="card card-warning">
+        <h4>🔧 必要な改修（30行程度）</h4>
+        <div class="code-block">
+<span class="comment">// background.jsに追加</span>
+<span class="keyword">chrome.runtime.onMessage</span>.<span class="function">addListener</span>((request, sender, sendResponse) => {
+  <span class="keyword">if</span> (request.<span class="keyword">action</span> === <span class="string">'checkDuplicate'</span>) {
+    <span class="keyword">const</span> history = <span class="keyword">JSON</span>.<span class="function">parse</span>(<span class="keyword">localStorage</span>.<span class="function">getItem</span>(<span class="string">'michatta_history'</span>) || <span class="string">'[]'</span>);
+    <span class="keyword">const</span> isDuplicate = history.<span class="function">includes</span>(request.<span class="keyword">productId</span>);
+    <span class="function">sendResponse</span>({ <span class="keyword">isDuplicate</span> });
+  }
+  <span class="keyword">return</span> <span class="keyword">true</span>;
+});
+        </div>
+      </div>
+
+      <h3>3️⃣ しらべる君 (v1.4.0) - AI統合済み</h3>
+
+      <div class="card">
+        <h4>📋 基本情報</h4>
+        <p><strong>場所</strong>: ~/Desktop/しらべる君/</p>
+        <p><strong>バージョン</strong>: 1.4.0</p>
+        <p><strong>Manifest</strong>: v3</p>
+        <p><strong>AI統合</strong>: OpenAI GPT-4o-mini（既に実装済み）</p>
+      </div>
+
+      <div class="card card-success">
+        <h4>✅ 主要機能</h4>
+        <ul>
+          <li><strong>OpenAI API統合</strong>: 既にbackground.jsで実装済み</li>
+          <li><strong>AI翻訳</strong>: 8つのオプション（brand, category, material等）</li>
+          <li><strong>価格分析</strong>: 中央値、平均、最小、最大を自動計算</li>
+          <li><strong>Terapeak統合</strong>: eBay Seller Hubデータ取得</li>
+          <li><strong>詳細送料計算</strong>: EP, CF, CD, EL, CE（5種類）</li>
+        </ul>
+      </div>
+
+      <div class="card card-info">
+        <h4>💡 改修不要（既にAPI化済み）</h4>
+        <p>background.jsの既存メッセージリスナーがそのまま使える：</p>
+        <div class="code-block">
+<span class="comment">// 既存コード（改修不要）</span>
+<span class="keyword">chrome.runtime.onMessage</span>.<span class="function">addListener</span>((request, sender, sendResponse) => {
+  <span class="keyword">if</span> (request.<span class="keyword">action</span> === <span class="string">'generateKeyword'</span>) {
+    <span class="function">generateEbayKeyword</span>(request.title, request.description, request.options)
+      .<span class="function">then</span>(keyword => <span class="function">sendResponse</span>({ <span class="keyword">success</span>: <span class="keyword">true</span>, keyword }));
+    <span class="keyword">return</span> <span class="keyword">true</span>;
+  }
+});
+        </div>
+      </div>
+
+      <h3>📊 統合後の役割分担</h3>
+
+      <table>
+        <thead>
+          <tr>
+            <th>拡張機能</th>
+            <th>Layer 0</th>
+            <th>Layer 1</th>
+            <th>Layer 2</th>
+            <th>Layer 3</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>とりこみ君</strong></td>
+            <td>タイトル抽出</td>
+            <td>画像URL取得</td>
+            <td>-</td>
+            <td>-</td>
+          </tr>
+          <tr>
+            <td><strong>みちゃった君</strong></td>
+            <td>重複チェック</td>
+            <td>-</td>
+            <td>-</td>
+            <td>履歴記録</td>
+          </tr>
+          <tr>
+            <td><strong>しらべる君</strong></td>
+            <td>AI分析（ブランド等）</td>
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+          </tr>
+          <tr>
+            <td><strong>Vibe Hive</strong></td>
+            <td>-</td>
+            <td>Claude Vision呼び出し</td>
+            <td>ルーティング</td>
+            <td>学習ループ</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- タブ5: アーキテクチャ -->
+    <div id="architecture" class="tab-content">
+      <h2>🏗️ システムアーキテクチャ</h2>
+
+      <h3>📐 全体構成図</h3>
+
+      <div class="architecture-diagram">
+┌───────────────────────────────────────────────────┐
+│              Vibe Hive Main Process              │
+│  ┌─────────────────────────────────────────────┐ │
+│  │   AutomationService (TypeScript)            │ │
+│  │   - node-cron（スケジューラー）              │ │
+│  │   - WebSocket Client (ws://localhost:9876)  │ │
+│  │   - Layer 1-3 処理                          │ │
+│  └─────────────────────────────────────────────┘ │
+└───────────────┬───────────────────────────────────┘
+                │ WebSocket (JSON commands)
+                ▼
+┌───────────────────────────────────────────────────┐
+│        Extension Bridge Service (Node.js)        │
+│  ┌─────────────────────────────────────────────┐ │
+│  │   WebSocket Server (port 9876)              │ │
+│  │   Puppeteer Controller                      │ │
+│  │   Message Router                            │ │
+│  └─────────────────────────────────────────────┘ │
+│                                                   │
+│  起動するChrome:                                  │
+│  - Puppeteer headful mode                       │
+│  - User Profile永続化                            │
+│  - 拡張機能3つロード                             │
+└────┬──────────┬──────────┬──────────────────────┘
+     │          │          │
+     ▼          ▼          ▼
+┌─────────┐ ┌─────────┐ ┌─────────┐
+│とりこみ君│ │みちゃった│ │しらべる君│
+│  (改修)  │ │君 (改修) │ │  (改修)  │
+└────┬────┘ └────┬────┘ └────┬────┘
+     │           │           │
+     └───────────┴───────────┘
+                 │
+                 ▼
+         ┌───────────────┐
+         │   メルカリ    │
+         │ (Target Site)│
+         └───────────────┘
+      </div>
+
+      <h3>🔄 データフロー（1商品あたり）</h3>
+
+      <div class="timeline">
+        <div class="timeline-item">
+          <h4>1. スケジューラー起動</h4>
+          <p>Vibe Hiveのnode-cronが10:12（±30分）にセッション開始</p>
+        </div>
+        <div class="timeline-item">
+          <h4>2. WebSocket送信</h4>
+          <p>Vibe Hive → Extension Bridge: <code>{"action": "scrapeProducts", "count": 170}</code></p>
+        </div>
+        <div class="timeline-item">
+          <h4>3. ページ遷移</h4>
+          <p>Puppeteerでメルカリ検索結果ページを開く（2-4秒ランダム待機）</p>
+        </div>
+        <div class="timeline-item">
+          <h4>4. 重複チェック（みちゃった君）</h4>
+          <p>Extension Bridge → みちゃった君: <code>{"action": "checkDuplicate", "productId": "m12345"}</code></p>
+          <p>みちゃった君 → Extension Bridge: <code>{"isDuplicate": false}</code></p>
+        </div>
+        <div class="timeline-item">
+          <h4>5. 商品データ抽出（とりこみ君）</h4>
+          <p>Extension Bridge → とりこみ君: <code>{"action": "extractData"}</code></p>
+          <p>とりこみ君 → Extension Bridge: <code>{"title": "...", "price": 5000, "images": [...]}</code></p>
+        </div>
+        <div class="timeline-item">
+          <h4>6. テキスト分析（しらべる君）</h4>
+          <p>Extension Bridge → しらべる君: <code>{"action": "generateKeyword", "title": "..."}</code></p>
+          <p>しらべる君 → Extension Bridge: <code>{"keyword": "Hermes scarf", "confidence": 0.9}</code></p>
+        </div>
+        <div class="timeline-item">
+          <h4>7. Layer 0判定（Vibe Hive）</h4>
+          <p>confidence > 0.8 → Layer 1へ進む</p>
+        </div>
+        <div class="timeline-item">
+          <h4>8. 画像分析（Claude Vision API）</h4>
+          <p>Vibe Hive → Claude API: 画像URL送信</p>
+          <p>Claude API → Vibe Hive: <code>{"condition": "良好", "confidence": 0.85}</code></p>
+        </div>
+        <div class="timeline-item">
+          <h4>9. Layer 2ルーティング</h4>
+          <p>confidence > 0.8 → 自動登録キューへ</p>
+          <p>0.6 < confidence < 0.8 → 人間レビューキューへ</p>
+        </div>
+      </div>
+
+      <h3>💻 Extension Bridge実装例</h3>
+
+      <div class="code-block">
+<span class="comment">// ~/Desktop/vibe-hive/extension-bridge/index.js</span>
+
+<span class="keyword">const</span> WebSocket = <span class="keyword">require</span>(<span class="string">'ws'</span>);
+<span class="keyword">const</span> puppeteer = <span class="keyword">require</span>(<span class="string">'puppeteer-core'</span>);
+<span class="keyword">const</span> chromePaths = <span class="keyword">require</span>(<span class="string">'chrome-paths'</span>);
+
+<span class="keyword">class</span> <span class="function">ExtensionBridge</span> {
+  <span class="keyword">constructor</span>() {
+    <span class="keyword">this</span>.wss = <span class="keyword">new</span> WebSocket.<span class="function">Server</span>({ <span class="keyword">port</span>: <span class="string">9876</span> });
+    <span class="keyword">this</span>.browser = <span class="keyword">null</span>;
+    <span class="keyword">this</span>.page = <span class="keyword">null</span>;
+  }
+
+  <span class="keyword">async</span> <span class="function">init</span>() {
+    <span class="comment">// Chrome起動（拡張機能ロード）</span>
+    <span class="keyword">this</span>.browser = <span class="keyword">await</span> puppeteer.<span class="function">launch</span>({
+      <span class="keyword">executablePath</span>: chromePaths.chrome,
+      <span class="keyword">headless</span>: <span class="keyword">false</span>, <span class="comment">// コパイロット型: 画面あり</span>
+      <span class="keyword">userDataDir</span>: <span class="string">'./chrome-profile'</span>, <span class="comment">// プロファイル永続化</span>
+      <span class="keyword">args</span>: [
+        <span class="string">`--load-extension=`</span> + [
+          <span class="string">'/Users/naokijodan/Desktop/とりこみ君'</span>,
+          <span class="string">'/Users/naokijodan/Desktop/みちゃった君'</span>,
+          <span class="string">'/Users/naokijodan/Desktop/しらべる君'</span>
+        ].<span class="function">join</span>(<span class="string">','</span>),
+        <span class="string">'--disable-blink-features=AutomationControlled'</span>
+      ]
+    });
+
+    <span class="keyword">this</span>.page = <span class="keyword">await</span> <span class="keyword">this</span>.browser.<span class="function">newPage</span>();
+
+    <span class="comment">// WebSocketサーバー</span>
+    <span class="keyword">this</span>.wss.<span class="function">on</span>(<span class="string">'connection'</span>, (ws) => {
+      ws.<span class="function">on</span>(<span class="string">'message'</span>, <span class="keyword">async</span> (message) => {
+        <span class="keyword">const</span> request = <span class="keyword">JSON</span>.<span class="function">parse</span>(message);
+        <span class="keyword">const</span> response = <span class="keyword">await</span> <span class="keyword">this</span>.<span class="function">handleRequest</span>(request);
+        ws.<span class="function">send</span>(<span class="keyword">JSON</span>.<span class="function">stringify</span>(response));
+      });
+    });
+  }
+
+  <span class="keyword">async</span> <span class="function">handleRequest</span>(request) {
+    <span class="keyword">switch</span> (request.action) {
+      <span class="keyword">case</span> <span class="string">'scrapeProducts'</span>:
+        <span class="keyword">return</span> <span class="keyword">await</span> <span class="keyword">this</span>.<span class="function">scrapeProducts</span>(request.params);
+
+      <span class="keyword">case</span> <span class="string">'checkDuplicate'</span>:
+        <span class="keyword">return</span> <span class="keyword">await</span> <span class="keyword">this</span>.<span class="function">callExtension</span>(<span class="string">'michattaKun'</span>, request.params);
+
+      <span class="keyword">case</span> <span class="string">'extractData'</span>:
+        <span class="keyword">return</span> <span class="keyword">await</span> <span class="keyword">this</span>.<span class="function">callExtension</span>(<span class="string">'torikomiKun'</span>, request.params);
+
+      <span class="keyword">case</span> <span class="string">'analyzeText'</span>:
+        <span class="keyword">return</span> <span class="keyword">await</span> <span class="keyword">this</span>.<span class="function">callExtension</span>(<span class="string">'shiraberuKun'</span>, request.params);
+    }
+  }
+
+  <span class="comment">// 拡張機能のメッセージリスナーを呼び出し</span>
+  <span class="keyword">async</span> <span class="function">callExtension</span>(extensionName, params) {
+    <span class="keyword">return</span> <span class="keyword">await</span> <span class="keyword">this</span>.page.<span class="function">evaluate</span>(<span class="keyword">async</span> (extName, params) => {
+      <span class="keyword">return</span> <span class="keyword">new</span> <span class="keyword">Promise</span>((resolve) => {
+        chrome.runtime.<span class="function">sendMessage</span>(params, (response) => {
+          <span class="function">resolve</span>(response);
+        });
+      });
+    }, extensionName, params);
+  }
+
+  <span class="comment">// ランダム遅延（2-4秒）</span>
+  <span class="keyword">async</span> <span class="function">randomDelay</span>() {
+    <span class="keyword">const</span> delay = <span class="keyword">Math</span>.<span class="function">floor</span>(<span class="keyword">Math</span>.<span class="function">random</span>() * <span class="string">2000</span>) + <span class="string">2000</span>;
+    <span class="keyword">await</span> <span class="keyword">new</span> <span class="keyword">Promise</span>(r => <span class="function">setTimeout</span>(r, delay));
+  }
+}
+
+<span class="keyword">module</span>.exports = ExtensionBridge;
+      </div>
+    </div>
+
+    <!-- タブ6: 実装ガイド -->
+    <div id="implementation" class="tab-content">
+      <h2>💻 実装ガイド</h2>
+
+      <div class="alert alert-info">
+        <strong>📌 前提条件</strong><br>
+        - Node.js 18以上<br>
+        - Vibe Hiveプロジェクト<br>
+        - 既存拡張機能（とりこみ君、みちゃった君、しらべる君）<br>
+        - OpenAI APIキー（しらべる君用、既存）<br>
+        - Claude APIキー（新規）<br>
+        - Smartproxy APIキー（新規）
+      </div>
+
+      <h3>🔧 Phase 0: 拡張機能の改修（1週間）</h3>
+
+      <div class="card">
+        <h4>1. とりこみ君の改修</h4>
+        <p><strong>ファイル</strong>: background.js（新規作成）</p>
+        <div class="code-block">
+<span class="comment">// background.js（新規作成）</span>
+<span class="keyword">chrome.runtime.onMessage</span>.<span class="function">addListener</span>((request, sender, sendResponse) => {
+  <span class="keyword">if</span> (request.<span class="keyword">action</span> === <span class="string">'extractData'</span>) {
+    <span class="comment">// content.jsの既存関数を呼び出し</span>
+    chrome.tabs.<span class="function">query</span>({ <span class="keyword">active</span>: <span class="keyword">true</span>, <span class="keyword">currentWindow</span>: <span class="keyword">true</span> }, (tabs) => {
+      chrome.tabs.<span class="function">sendMessage</span>(tabs[<span class="string">0</span>].id, { <span class="keyword">action</span>: <span class="string">'extract'</span> }, (response) => {
+        <span class="function">sendResponse</span>(response);
+      });
+    });
+    <span class="keyword">return</span> <span class="keyword">true</span>; <span class="comment">// 非同期</span>
+  }
+});
+        </div>
+        <p><strong>manifest.json</strong>に追加:</p>
+        <div class="code-block">
+{
+  <span class="string">"background"</span>: {
+    <span class="string">"service_worker"</span>: <span class="string">"background.js"</span>
+  }
+}
+        </div>
+      </div>
+
+      <div class="card">
+        <h4>2. みちゃった君の改修</h4>
+        <p><strong>ファイル</strong>: background.js（既存ファイルに追加）</p>
+        <div class="code-block">
+<span class="comment">// background.jsに追加</span>
+<span class="keyword">chrome.runtime.onMessage</span>.<span class="function">addListener</span>((request, sender, sendResponse) => {
+  <span class="keyword">if</span> (request.<span class="keyword">action</span> === <span class="string">'checkDuplicate'</span>) {
+    chrome.storage.local.<span class="function">get</span>([<span class="string">'michatta_history'</span>], (result) => {
+      <span class="keyword">const</span> history = result.michatta_history || [];
+      <span class="keyword">const</span> isDuplicate = history.<span class="function">includes</span>(request.productId);
+      <span class="function">sendResponse</span>({ isDuplicate });
+    });
+    <span class="keyword">return</span> <span class="keyword">true</span>;
+  }
+
+  <span class="keyword">if</span> (request.<span class="keyword">action</span> === <span class="string">'markAsViewed'</span>) {
+    chrome.storage.local.<span class="function">get</span>([<span class="string">'michatta_history'</span>], (result) => {
+      <span class="keyword">const</span> history = result.michatta_history || [];
+      history.<span class="function">push</span>(request.productId);
+      <span class="comment">// 10,000件制限</span>
+      <span class="keyword">if</span> (history.length > <span class="string">10000</span>) {
+        history.<span class="function">shift</span>();
+      }
+      chrome.storage.local.<span class="function">set</span>({ <span class="keyword">michatta_history</span>: history }, () => {
+        <span class="function">sendResponse</span>({ <span class="keyword">success</span>: <span class="keyword">true</span> });
+      });
+    });
+    <span class="keyword">return</span> <span class="keyword">true</span>;
+  }
+});
+        </div>
+      </div>
+
+      <div class="card">
+        <h4>3. しらべる君は改修不要</h4>
+        <p>background.jsに既にメッセージリスナーが実装されているため、そのまま使用可能。</p>
+      </div>
+
+      <h3>🛠️ Phase 1: Extension Bridgeの構築（1週間）</h3>
+
+      <div class="card">
+        <h4>1. プロジェクト初期化</h4>
+        <div class="code-block">
+<span class="comment"># Vibe Hiveプロジェクト内に作成</span>
+cd ~/Desktop/vibe-hive
+mkdir extension-bridge
+cd extension-bridge
+npm init -y
+
+<span class="comment"># 依存関係インストール</span>
+npm install ws puppeteer-core chrome-paths
+        </div>
+      </div>
+
+      <div class="card">
+        <h4>2. Extension Bridge実装</h4>
+        <p>（アーキテクチャタブのコード参照）</p>
+      </div>
+
+      <div class="card">
+        <h4>3. テスト実行</h4>
+        <div class="code-block">
+<span class="comment"># Extension Bridge起動</span>
+node index.js
+
+<span class="comment"># 別ターミナルでテスト</span>
+node test-client.js
+        </div>
+      </div>
+
+      <h3>🚀 Phase 2: Vibe Hive統合（1週間）</h3>
+
+      <div class="card">
+        <h4>AutomationService実装</h4>
+        <p><strong>ファイル</strong>: src/main/services/AutomationService.ts</p>
+        <div class="code-block">
+<span class="keyword">import</span> WebSocket <span class="keyword">from</span> <span class="string">'ws'</span>;
+<span class="keyword">import</span> cron <span class="keyword">from</span> <span class="string">'node-cron'</span>;
+
+<span class="keyword">export class</span> <span class="function">AutomationService</span> {
+  <span class="keyword">private</span> ws: WebSocket | <span class="keyword">null</span> = <span class="keyword">null</span>;
+
+  <span class="keyword">async</span> <span class="function">init</span>() {
+    <span class="comment">// Extension Bridgeに接続</span>
+    <span class="keyword">this</span>.ws = <span class="keyword">new</span> <span class="function">WebSocket</span>(<span class="string">'ws://localhost:9876'</span>);
+
+    <span class="comment">// スケジュール設定</span>
+    cron.<span class="function">schedule</span>(<span class="string">'12 10 * * *'</span>, () => <span class="keyword">this</span>.<span class="function">runSession</span>(<span class="string">170</span>));
+    cron.<span class="function">schedule</span>(<span class="string">'08 15 * * *'</span>, () => <span class="keyword">this</span>.<span class="function">runSession</span>(<span class="string">170</span>));
+    cron.<span class="function">schedule</span>(<span class="string">'15 21 * * *'</span>, () => <span class="keyword">this</span>.<span class="function">runSession</span>(<span class="string">160</span>));
+  }
+
+  <span class="keyword">async</span> <span class="function">runSession</span>(targetCount: <span class="keyword">number</span>) {
+    <span class="comment">// ランダムジッター追加</span>
+    <span class="keyword">const</span> jitter = <span class="keyword">Math</span>.<span class="function">floor</span>(<span class="keyword">Math</span>.<span class="function">random</span>() * <span class="string">61</span>) - <span class="string">30</span>;
+    <span class="keyword">await</span> <span class="keyword">this</span>.<span class="function">sleep</span>(jitter * <span class="string">60</span> * <span class="string">1000</span>);
+
+    <span class="comment">// Extension Bridgeにスクレイピング指示</span>
+    <span class="keyword">this</span>.ws?.<span class="function">send</span>(<span class="keyword">JSON</span>.<span class="function">stringify</span>({
+      <span class="keyword">action</span>: <span class="string">'scrapeProducts'</span>,
+      <span class="keyword">params</span>: { <span class="keyword">count</span>: targetCount }
+    }));
+  }
+}
+        </div>
+      </div>
+
+      <h3>📦 環境変数設定</h3>
+
+      <div class="card">
+        <h4>.env ファイル作成</h4>
+        <div class="code-block">
+<span class="comment"># ~/Desktop/vibe-hive/.env</span>
+
+<span class="comment"># 既存</span>
+<span class="keyword">OPENAI_API_KEY</span>=sk-...（しらべる君用）
+
+<span class="comment"># 新規</span>
+<span class="keyword">ANTHROPIC_API_KEY</span>=sk-ant-...（Claude Vision用）
+<span class="keyword">SMARTPROXY_API_KEY</span>=...（Residential Proxy用）
+        </div>
+      </div>
+    </div>
+
+    <!-- タブ7: コパイロット運用 -->
+    <div id="copilot" class="tab-content">
+      <h2>👨‍✈️ コパイロット型運用ガイド</h2>
+
+      <div class="alert alert-danger">
+        <strong>⚠️ 重要な警告</strong><br>
+        完全自動化（Headless）は「アカウント凍結リスク」が90%以上。コパイロット型（有人監視）で運用することを強く推奨。
+      </div>
+
+      <h3>🎯 コパイロット型とは</h3>
+
+      <div class="card card-info">
+        <h4>定義</h4>
+        <p>AIが自動処理を行い、人間が監視・例外対応・最終判断を行う「半自動化」運用形態。飛行機の副操縦士（コパイロット）のように、AIをサポートする役割。</p>
+      </div>
+
+      <h3>✅ コパイロット型の実装</h3>
+
+      <h4>1. Headedモード（画面あり）での運用</h4>
+
+      <div class="card">
+        <h4>なぜHeadedモードか</h4>
+        <ul>
+          <li><strong>目視確認</strong>: CAPTCHAや未知のポップアップを人間が検知</li>
+          <li><strong>信頼性向上</strong>: ブラウザが「実際に使われている」とプラットフォームが認識</li>
+          <li><strong>デバッグ容易</strong>: 問題発生時にすぐに確認できる</li>
+        </ul>
+
+        <div class="code-block">
+<span class="comment">// Puppeteer設定</span>
+puppeteer.<span class="function">launch</span>({
+  <span class="keyword">headless</span>: <span class="keyword">false</span>, <span class="comment">// ← 必ずfalse</span>
+  <span class="keyword">userDataDir</span>: <span class="string">'./chrome-profile'</span>,
+  <span class="keyword">args</span>: [
+    <span class="string">'--window-size=1920,1080'</span>,
+    <span class="string">'--window-position=0,0'</span>
+  ]
+});
+        </div>
+      </div>
+
+      <h4>2. Human Handoff（制御委譲）</h4>
+
+      <div class="card">
+        <h4>実装例</h4>
+        <div class="code-block">
+<span class="comment">// Extension Bridge内</span>
+<span class="keyword">async</span> <span class="function">scrapeProducts</span>() {
+  <span class="keyword">for</span> (<span class="keyword">let</span> i = <span class="string">0</span>; i < count; i++) {
+    <span class="keyword">try</span> {
+      <span class="comment">// スクレイピング処理</span>
+      <span class="keyword">await</span> <span class="keyword">this</span>.<span class="function">extractProduct</span>();
+    } <span class="keyword">catch</span> (error) {
+      <span class="keyword">if</span> (error.<span class="keyword">message</span>.<span class="function">includes</span>(<span class="string">'CAPTCHA'</span>)) {
+        <span class="comment">// 人間に委譲</span>
+        <span class="keyword">await</span> <span class="keyword">this</span>.<span class="function">notifyHuman</span>(<span class="string">'CAPTCHAが出現しました。手動で解決してください。'</span>);
+        <span class="keyword">await</span> <span class="keyword">this</span>.<span class="function">waitForHumanAction</span>();
+      }
+    }
+  }
+}
+
+<span class="keyword">async</span> <span class="function">notifyHuman</span>(message: <span class="keyword">string</span>) {
+  <span class="comment">// デスクトップ通知</span>
+  <span class="keyword">const</span> notifier = <span class="keyword">require</span>(<span class="string">'node-notifier'</span>);
+  notifier.<span class="function">notify</span>({
+    <span class="keyword">title</span>: <span class="string">'🚨 人間の介入が必要'</span>,
+    <span class="keyword">message</span>: message,
+    <span class="keyword">sound</span>: <span class="keyword">true</span>
+  });
+}
+
+<span class="keyword">async</span> <span class="function">waitForHumanAction</span>() {
+  <span class="comment">// ボタンクリックまで待機</span>
+  <span class="keyword">await</span> <span class="keyword">new</span> <span class="keyword">Promise</span>(resolve => {
+    process.<span class="function">stdin</span>.<span class="function">once</span>(<span class="string">'data'</span>, resolve);
+  });
+}
+        </div>
+      </div>
+
+      <h4>3. ブラウザプロファイルの「育成」</h4>
+
+      <div class="card">
+        <h4>なぜプロファイルを育てるか</h4>
+        <p>メルカリやeBayは「新規アカウント」や「クリーンなブラウザ」を警戒する。長期間使用され、閲覧履歴やCookieが蓄積されたプロファイルは「信頼できるユーザー」と判断される。</p>
+
+        <h4>育成方法</h4>
+        <ol>
+          <li><strong>永続化</strong>: `userDataDir`を指定し、プロファイルを保存</li>
+          <li><strong>日常的なブラウジング</strong>: YouTubeを見る、ニュースを読む等</li>
+          <li><strong>手動ログイン</strong>: メルカリ・eBayに手動でログインし、Cookieを蓄積</li>
+          <li><strong>定期的な手動操作</strong>: 週1回は手動で商品検索・閲覧を行う</li>
+        </ol>
+
+        <div class="code-block">
+<span class="comment">// プロファイル永続化</span>
+puppeteer.<span class="function">launch</span>({
+  <span class="keyword">userDataDir</span>: <span class="string">'./chrome-profile'</span>, <span class="comment">// ← 重要</span>
+  <span class="comment">// 初回起動後、このフォルダにCookie・履歴が保存される</span>
+});
+        </div>
+      </div>
+
+      <h4>4. ダブルチェック（異常値検知）</h4>
+
+      <div class="card">
+        <h4>実装例</h4>
+        <div class="code-block">
+<span class="comment">// Vibe Hive側</span>
+<span class="keyword">async</span> <span class="function">validateProduct</span>(product: Product) {
+  <span class="comment">// 価格異常値チェック</span>
+  <span class="keyword">if</span> (product.price < <span class="string">100</span> || product.price > <span class="string">1000000</span>) {
+    <span class="keyword">await</span> <span class="keyword">this</span>.<span class="function">alertHuman</span>(<span class="string">`異常価格: ¥${product.price}`</span>);
+    <span class="keyword">return</span> <span class="keyword">false</span>;
+  }
+
+  <span class="comment">// 前回価格との比較</span>
+  <span class="keyword">const</span> lastPrice = <span class="keyword">await</span> <span class="keyword">this</span>.db.<span class="function">getLastPrice</span>(product.id);
+  <span class="keyword">if</span> (lastPrice && <span class="keyword">Math</span>.<span class="function">abs</span>(product.price - lastPrice) / lastPrice > <span class="string">0.5</span>) {
+    <span class="keyword">await</span> <span class="keyword">this</span>.<span class="function">alertHuman</span>(<span class="string">`価格が50%以上変動: ${lastPrice} → ${product.price}`</span>);
+    <span class="keyword">return</span> <span class="keyword">false</span>;
+  }
+
+  <span class="keyword">return</span> <span class="keyword">true</span>;
+}
+        </div>
+      </div>
+
+      <h3>📊 コパイロット型 vs 完全自動化</h3>
+
+      <table>
+        <thead>
+          <tr>
+            <th>項目</th>
+            <th>コパイロット型</th>
+            <th>完全自動化</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Ban確率</strong></td>
+            <td><span class="badge badge-success">0.3%</span></td>
+            <td><span class="badge badge-danger">90%</span></td>
+          </tr>
+          <tr>
+            <td><strong>CAPTCHA対応</strong></td>
+            <td><span class="badge badge-success">人間が解決</span></td>
+            <td><span class="badge badge-danger">処理停止</span></td>
+          </tr>
+          <tr>
+            <td><strong>誤出品リスク</strong></td>
+            <td><span class="badge badge-success">ダブルチェック</span></td>
+            <td><span class="badge badge-danger">検知できず</span></td>
+          </tr>
+          <tr>
+            <td><strong>トラブル対応</strong></td>
+            <td><span class="badge badge-success">即座に介入</span></td>
+            <td><span class="badge badge-danger">気づかない</span></td>
+          </tr>
+          <tr>
+            <td><strong>人的コスト</strong></td>
+            <td><span class="badge badge-warning">監視1時間/日</span></td>
+            <td><span class="badge badge-success">0時間</span></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="alert alert-success">
+        <strong>✅ 推奨運用スタイル</strong><br>
+        1. セッション開始時に人間がPCの前に待機<br>
+        2. Vibe Hiveを起動し、Extension Bridgeが動作することを確認<br>
+        3. ブラウザが自動で動くのを監視（13分間）<br>
+        4. CAPTCHAや異常値が出たら手動介入<br>
+        5. セッション完了後、結果レポートを確認
+      </div>
+    </div>
+
+    <!-- タブ8: コスト & ROI -->
+    <div id="cost" class="tab-content">
+      <h2>💰 コスト分析 & ROI</h2>
+
+      <h3>💵 月間コスト詳細（500商品/日）</h3>
+
+      <table>
+        <thead>
+          <tr>
+            <th>項目</th>
+            <th>単価</th>
+            <th>1日</th>
+            <th>月間（30日）</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Layer 0: Claude Haiku</strong><br>テキストスクリーニング</td>
+            <td>0.1円/商品</td>
+            <td>500 × 0.1 = 50円</td>
+            <td>1,500円</td>
+          </tr>
+          <tr>
+            <td><strong>Layer 1: Claude Vision</strong><br>画像分析（125商品）</td>
+            <td>1.86円/商品</td>
+            <td>125 × 1.86 = 233円</td>
+            <td>6,990円</td>
+          </tr>
+          <tr>
+            <td><strong>Layer 3: 人間レビュー</strong><br>外注（25商品）</td>
+            <td>10円/商品</td>
+            <td>25 × 10 = 250円</td>
+            <td>7,500円</td>
+          </tr>
+          <tr>
+            <td><strong>Proxy: Smartproxy</strong><br>Residential 15GB</td>
+            <td>-</td>
+            <td>450円</td>
+            <td>13,500円</td>
+          </tr>
+          <tr>
+            <td><strong>OpenAI: しらべる君</strong><br>GPT-4o-mini（既存API）</td>
+            <td>0.05円/req</td>
+            <td>500 × 0.05 = 25円</td>
+            <td>750円</td>
+          </tr>
+          <tr>
+            <td><strong>開発・保守</strong><br>月次メンテナンス</td>
+            <td>-</td>
+            <td>-</td>
+            <td>5,000円</td>
+          </tr>
+          <tr>
+            <td><strong>その他</strong><br>サーバー・ツール等</td>
+            <td>-</td>
+            <td>-</td>
+            <td>1,760円</td>
+          </tr>
+          <tr style="background: #fef3c7; font-weight: bold;">
+            <td><strong>合計</strong></td>
+            <td>-</td>
+            <td><strong>558円</strong></td>
+            <td><strong>¥37,000</strong></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>📊 人間のみ vs AI統合システム</h3>
+
+      <div class="metric-grid">
+        <div class="metric">
+          <div class="metric-value" style="color: var(--danger);">¥180,000</div>
+          <div class="metric-label">人間のみ（500商品×10円×30日）</div>
+        </div>
+        <div class="metric">
+          <div class="metric-value" style="color: var(--success);">¥37,000</div>
+          <div class="metric-label">AI統合システム</div>
+        </div>
+        <div class="metric">
+          <div class="metric-value" style="color: var(--success);">79%</div>
+          <div class="metric-label">コスト削減率</div>
+        </div>
+        <div class="metric">
+          <div class="metric-value" style="color: var(--primary);">624%</div>
+          <div class="metric-label">ROI（投資回収率）</div>
+        </div>
+      </div>
+
+      <h3>💡 ROI計算式</h3>
+
+      <div class="card">
+        <div class="code-block">
+削減額 = ¥180,000 - ¥37,000 = ¥143,000
+
+ROI = (削減額 ÷ AI統合コスト) × 100
+    = (¥143,000 ÷ ¥37,000) × 100
+    = 386.5%
+
+または
+
+ROI = (人間コスト ÷ AI統合コスト) × 100
+    = (¥180,000 ÷ ¥37,000) × 100
+    = 486.5%
+
+<span class="comment">※ 一般的には「(利益 ÷ 投資額) × 100」</span>
+<span class="comment">  この場合、削減額を利益とみなすと 386.5%</span>
+<span class="comment">  完全置き換えとみなすと 486.5%</span>
+        </div>
+      </div>
+
+      <h3>📈 長期的なコスト推移</h3>
+
+      <table>
+        <thead>
+          <tr>
+            <th>期間</th>
+            <th>人間のみ</th>
+            <th>AI統合</th>
+            <th>累積削減額</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>1ヶ月</td>
+            <td>¥180,000</td>
+            <td>¥37,000</td>
+            <td>¥143,000</td>
+          </tr>
+          <tr>
+            <td>3ヶ月</td>
+            <td>¥540,000</td>
+            <td>¥111,000</td>
+            <td>¥429,000</td>
+          </tr>
+          <tr>
+            <td>6ヶ月</td>
+            <td>¥1,080,000</td>
+            <td>¥222,000</td>
+            <td>¥858,000</td>
+          </tr>
+          <tr>
+            <td>1年</td>
+            <td>¥2,160,000</td>
+            <td>¥444,000</td>
+            <td>¥1,716,000</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="alert alert-success">
+        <strong>✅ 投資回収期間</strong><br>
+        初期開発コスト（6週間×人件費）を¥300,000と仮定した場合：<br>
+        ¥300,000 ÷ ¥143,000/月 = <strong>2.1ヶ月で回収</strong>
+      </div>
+    </div>
+
+    <!-- タブ9: 実装計画 -->
+    <div id="phases" class="tab-content">
+      <h2>📅 実装計画（6週間）</h2>
+
+      <h3>📋 フェーズ一覧</h3>
+
+      <div class="metric-grid">
+        <div class="metric">
+          <div class="metric-value">1週</div>
+          <div class="metric-label">Phase 0: 拡張機能改修</div>
+        </div>
+        <div class="metric">
+          <div class="metric-value">1週</div>
+          <div class="metric-label">Phase 1: Extension Bridge</div>
+        </div>
+        <div class="metric">
+          <div class="metric-value">1週</div>
+          <div class="metric-label">Phase 2: Vibe Hive統合</div>
+        </div>
+        <div class="metric">
+          <div class="metric-value">2週</div>
+          <div class="metric-label">Phase 3: Layer 1実装</div>
+        </div>
+        <div class="metric">
+          <div class="metric-value">1週</div>
+          <div class="metric-label">Phase 4: 安定化テスト</div>
+        </div>
+      </div>
+
+      <h3>Phase 0: 拡張機能改修（1週間）</h3>
+
+      <div class="timeline">
+        <div class="timeline-item">
+          <h4>Day 1-2: とりこみ君改修</h4>
+          <ul>
+            <li>background.js新規作成</li>
+            <li>extractDataメッセージリスナー追加</li>
+            <li>manifest.json更新</li>
+            <li>テスト（10商品）</li>
+          </ul>
+        </div>
+        <div class="timeline-item">
+          <h4>Day 3-4: みちゃった君改修</h4>
+          <ul>
+            <li>checkDuplicateメッセージリスナー追加</li>
+            <li>markAsViewedメッセージリスナー追加</li>
+            <li>localStorage → chrome.storage.local移行</li>
+            <li>テスト（重複チェック）</li>
+          </ul>
+        </div>
+        <div class="timeline-item">
+          <h4>Day 5: しらべる君確認</h4>
+          <ul>
+            <li>既存メッセージリスナー動作確認</li>
+            <li>OpenAI APIキー検証</li>
+          </ul>
+        </div>
+        <div class="timeline-item">
+          <h4>Day 6-7: 統合テスト</h4>
+          <ul>
+            <li>3拡張機能の連携テスト</li>
+            <li>エラーハンドリング追加</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>Phase 1: Extension Bridge構築（1週間）</h3>
+
+      <div class="timeline">
+        <div class="timeline-item">
+          <h4>Day 1-2: 基盤実装</h4>
+          <ul>
+            <li>WebSocketサーバー実装</li>
+            <li>Puppeteer初期化</li>
+            <li>拡張機能ロード機能</li>
+          </ul>
+        </div>
+        <div class="timeline-item">
+          <h4>Day 3-4: メッセージング実装</h4>
+          <ul>
+            <li>callExtension関数実装</li>
+            <li>各拡張機能へのAPI呼び出し</li>
+            <li>エラーハンドリング</li>
+          </ul>
+        </div>
+        <div class="timeline-item">
+          <h4>Day 5-6: スクレイピングロジック</h4>
+          <ul>
+            <li>scrapeProducts関数実装</li>
+            <li>ランダム遅延機能</li>
+            <li>ページ遷移制御</li>
+          </ul>
+        </div>
+        <div class="timeline-item">
+          <h4>Day 7: テスト</h4>
+          <ul>
+            <li>50商品でのE2Eテスト</li>
+            <li>パフォーマンス測定</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>Phase 2: Vibe Hive統合（1週間）</h3>
+
+      <div class="timeline">
+        <div class="timeline-item">
+          <h4>Day 1-2: AutomationService実装</h4>
+          <ul>
+            <li>WebSocket Client実装</li>
+            <li>メッセージ送受信</li>
+            <li>エラーハンドリング</li>
+          </ul>
+        </div>
+        <div class="timeline-item">
+          <h4>Day 3-4: スケジューラー実装</h4>
+          <ul>
+            <li>node-cron設定（3セッション）</li>
+            <li>ランダムジッター機能</li>
+            <li>セッション管理</li>
+          </ul>
+        </div>
+        <div class="timeline-item">
+          <h4>Day 5-6: Layer 0実装</h4>
+          <ul>
+            <li>テキストフィルタリング</li>
+            <li>しらべる君API統合</li>
+            <li>ブランド判定ロジック</li>
+          </ul>
+        </div>
+        <div class="timeline-item">
+          <h4>Day 7: テスト</h4>
+          <ul>
+            <li>100商品でのテスト</li>
+            <li>フィルタ精度測定</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>Phase 3: Layer 1実装（2週間）</h3>
+
+      <div class="timeline">
+        <div class="timeline-item">
+          <h4>Week 1: Claude Vision統合</h4>
+          <ul>
+            <li>Claude Vision API実装</li>
+            <li>画像URL取得（とりこみ君経由）</li>
+            <li>信頼度スコアリング</li>
+            <li>Few-Shot Prompt設計</li>
+          </ul>
+        </div>
+        <div class="timeline-item">
+          <h4>Week 2: Layer 2-3実装</h4>
+          <ul>
+            <li>動的ルーティング</li>
+            <li>人間レビューキュー</li>
+            <li>自動登録キュー</li>
+            <li>学習ループ（Few-Shot更新）</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>Phase 4: 安定化テスト（1週間）</h3>
+
+      <div class="timeline">
+        <div class="timeline-item">
+          <h4>Day 1-3: 500商品テスト</h4>
+          <ul>
+            <li>3セッション × 3日連続</li>
+            <li>エラー率測定</li>
+            <li>Ban確認</li>
+          </ul>
+        </div>
+        <div class="timeline-item">
+          <h4>Day 4-5: Proxy統合</h4>
+          <ul>
+            <li>Smartproxy設定</li>
+            <li>Residential Proxy検証</li>
+            <li>ローテーション確認</li>
+          </ul>
+        </div>
+        <div class="timeline-item">
+          <h4>Day 6-7: モニタリング構築</h4>
+          <ul>
+            <li>成功率ダッシュボード</li>
+            <li>Ban検知アラート</li>
+            <li>ログ可視化</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="alert alert-success">
+        <strong>✅ 完了条件</strong><br>
+        - Ban確率0.5%以下<br>
+        - 成功率95%以上<br>
+        - 1週間連続稼働でエラーなし<br>
+        - 自動化率95%（475/500商品）
+      </div>
+    </div>
+
+    <!-- タブ10: リスク管理 -->
+    <div id="risks" class="tab-content">
+      <h2>⚠️ リスク管理</h2>
+
+      <h3>🚨 技術的リスク</h3>
+
+      <table>
+        <thead>
+          <tr>
+            <th>リスク</th>
+            <th>確率</th>
+            <th>影響</th>
+            <th>対策</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>拡張機能のAPI変更</strong></td>
+            <td><span class="badge badge-success">低</span></td>
+            <td><span class="badge badge-danger">高</span></td>
+            <td>バージョン固定、API wrapper層で吸収</td>
+          </tr>
+          <tr>
+            <td><strong>Chrome更新で動作しない</strong></td>
+            <td><span class="badge badge-warning">中</span></td>
+            <td><span class="badge badge-danger">高</span></td>
+            <td>定期的な動作確認、Chromiumバージョン固定</td>
+          </tr>
+          <tr>
+            <td><strong>Puppeteerがextension読めない</strong></td>
+            <td><span class="badge badge-success">低</span></td>
+            <td><span class="badge badge-danger">高</span></td>
+            <td>Playwrightへのフォールバック</td>
+          </tr>
+          <tr>
+            <td><strong>WebSocket接続切断</strong></td>
+            <td><span class="badge badge-warning">中</span></td>
+            <td><span class="badge badge-warning">中</span></td>
+            <td>自動再接続、リトライ機構</td>
+          </tr>
+          <tr>
+            <td><strong>MV3 Service Worker休止</strong></td>
+            <td><span class="badge badge-warning">中</span></td>
+            <td><span class="badge badge-warning">中</span></td>
+            <td>Wake upシーケンス実装</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>💼 運用リスク</h3>
+
+      <table>
+        <thead>
+          <tr>
+            <th>リスク</th>
+            <th>確率</th>
+            <th>影響</th>
+            <th>対策</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>メルカリHTML構造変更</strong></td>
+            <td><span class="badge badge-warning">中</span></td>
+            <td><span class="badge badge-danger">高</span></td>
+            <td>とりこみ君の更新を監視、Config外部化</td>
+          </tr>
+          <tr>
+            <td><strong>アカウントBan</strong></td>
+            <td><span class="badge badge-success">低</span></td>
+            <td><span class="badge badge-danger">高</span></td>
+            <td>コパイロット型、Proxy切り替え、プロファイル育成</td>
+          </tr>
+          <tr>
+            <td><strong>AI API障害</strong></td>
+            <td><span class="badge badge-success">低</span></td>
+            <td><span class="badge badge-warning">中</span></td>
+            <td>OpenAI/Claude両方のフォールバック</td>
+          </tr>
+          <tr>
+            <td><strong>データ損失</strong></td>
+            <td><span class="badge badge-success">低</span></td>
+            <td><span class="badge badge-warning">中</span></td>
+            <td>SQLite定期バックアップ、クラウド同期</td>
+          </tr>
+          <tr>
+            <td><strong>誤出品</strong></td>
+            <td><span class="badge badge-warning">中</span></td>
+            <td><span class="badge badge-danger">高</span></td>
+            <td>ダブルチェック、異常値検知、人間レビュー</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>⚖️ 法務・コンプライアンスリスク</h3>
+
+      <table>
+        <thead>
+          <tr>
+            <th>リスク</th>
+            <th>確率</th>
+            <th>影響</th>
+            <th>対策</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>利用規約違反</strong></td>
+            <td><span class="badge badge-warning">中</span></td>
+            <td><span class="badge badge-danger">高</span></td>
+            <td>コパイロット型（人間主体）、過度な自動化を避ける</td>
+          </tr>
+          <tr>
+            <td><strong>個人情報保護法違反</strong></td>
+            <td><span class="badge badge-success">低</span></td>
+            <td><span class="badge badge-danger">高</span></td>
+            <td>公開情報のみ取得、個人情報は保存しない</td>
+          </tr>
+          <tr>
+            <td><strong>知的財産権侵害</strong></td>
+            <td><span class="badge badge-success">低</span></td>
+            <td><span class="badge badge-warning">中</span></td>
+            <td>商品情報は「事実の列挙」として扱う</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>🛡️ リスク軽減策</h3>
+
+      <div class="card card-success">
+        <h4>1. 多重防御アプローチ</h4>
+        <ul>
+          <li><strong>技術</strong>: Residential Proxy + ランダム遅延 + 3セッション分散</li>
+          <li><strong>運用</strong>: コパイロット型 + ブラウザプロファイル育成</li>
+          <li><strong>監視</strong>: リアルタイムアラート + ダッシュボード</li>
+        </ul>
+      </div>
+
+      <div class="card card-info">
+        <h4>2. 段階的な拡大</h4>
+        <ol>
+          <li><strong>Week 1-2</strong>: 50商品/日でテスト</li>
+          <li><strong>Week 3-4</strong>: 200商品/日に拡大</li>
+          <li><strong>Week 5-6</strong>: 500商品/日に到達</li>
+        </ol>
+        <p>Ban率を監視しながら段階的に増やす</p>
+      </div>
+
+      <div class="card card-warning">
+        <h4>3. 緊急停止プロトコル</h4>
+        <p>以下の場合、自動的にシステム停止：</p>
+        <ul>
+          <li>Ban率が5%を超えた場合</li>
+          <li>エラー率が20%を超えた場合</li>
+          <li>CAPTCHA出現率が10%を超えた場合</li>
+          <li>価格異常値が3件連続した場合</li>
+        </ul>
+      </div>
+
+      <div class="alert alert-danger">
+        <strong>⚠️ 最重要リスク</strong><br>
+        <strong>アカウント凍結</strong>は事業継続性に直結します。完全自動化を避け、必ずコパイロット型で運用してください。
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    function openTab(tabName) {
+      // すべてのタブコンテンツを非表示
+      const contents = document.getElementsByClassName('tab-content');
+      for (let i = 0; i < contents.length; i++) {
+        contents[i].classList.remove('active');
+      }
+
+      // すべてのタブボタンを非アクティブ
+      const buttons = document.getElementsByClassName('tab-button');
+      for (let i = 0; i < buttons.length; i++) {
+        buttons[i].classList.remove('active');
+      }
+
+      // 選択されたタブを表示
+      document.getElementById(tabName).classList.add('active');
+      event.target.classList.add('active');
+
+      // スクロールをトップに
+      window.scrollTo(0, 0);
+    }
+  </script>
+</body>
+</html>
