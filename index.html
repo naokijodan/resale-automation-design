@@ -2446,18 +2446,16 @@ ROI = (人間コスト ÷ AI統合コスト) × 100
       <div class="card card-success">
         <h4>解決方針（3つのアプローチ）</h4>
 
-        <h5>A案: __NEXT_DATA__からJSON抽出（最も確実）</h5>
-        <p>メルカリはNext.jsで作られており、ページ内に <code>&lt;script id="__NEXT_DATA__"&gt;</code> というタグがある。ここに出品者情報が<strong>構造化されたJSON</strong>として埋め込まれている。</p>
-        <p>しらべる君の <code>mercari-analyzer.js</code> が既にこの方法を使っている。テキスト検索や CSS セレクタに頼る必要がなく、<strong>HTML構造が変わっても影響を受けにくい</strong>。</p>
-        <div class="code-block">
-<span class="comment">// イメージ: __NEXT_DATA__から評価を取得</span>
-<span class="keyword">const</span> nextData = JSON.<span class="function">parse</span>(
-  document.<span class="function">querySelector</span>(<span class="string">'#__NEXT_DATA__'</span>).textContent
-);
-<span class="keyword">const</span> seller = nextData.props.pageProps.item.seller;
-<span class="comment">// seller.ratings.good, seller.ratings.normal, seller.ratings.bad</span>
+        <h5>A案: __NEXT_DATA__からJSON抽出 → <span style="color: #ef4444;">メルカリでは使えない可能性が高い</span></h5>
+        <p>当初はこれが最有力候補だったが、調査の結果<strong>メルカリの商品詳細ページでは使えない可能性が高い</strong>ことが判明。</p>
+        <div class="alert alert-danger" style="margin: 10px 0;">
+          <strong>調査結果:</strong><br>
+          - <strong>ヤフオク</strong>では <code>__NEXT_DATA__</code> に出品者評価データ（<code>itemJson.seller.rating</code>）が含まれており、とりこみ君で<strong>正常に動作している</strong><br>
+          - <strong>メルカリ</strong>では <code>__NEXT_DATA__</code> を使わず、meta タグ・data-testid・ld+json からデータを取得する実装になっている<br>
+          - しらべる君の <code>mercari-analyzer.js</code> は検索結果ページの<strong>価格だけ</strong>を <code>__NEXT_DATA__</code> から取得。出品者評価には使っていない<br>
+          - メルカリの商品詳細ページでは <code>__NEXT_DATA__</code> に出品者の評価データが含まれていないか、CSR（クライアントサイドレンダリング）で後から読み込まれるため取得できない可能性がある
         </div>
-        <p><span class="badge badge-success">推奨</span> HTML変更に強い。しらべる君で実績あり。</p>
+        <p><span class="badge badge-danger">要検証</span> 実際にメルカリの商品ページで <code>__NEXT_DATA__</code> の中身を確認する必要あり。評価データが入っていなければこの案は使えない。</p>
 
         <h5>B案: フリマアシストに完全依存（現実的）</h5>
         <p>方法1のフリマアシスト連携だけを使い、方法2・3は廃止する。</p>
@@ -2490,13 +2488,13 @@ ROI = (人間コスト ÷ AI統合コスト) × 100
       </div>
 
       <div class="card">
-        <h4>推奨: A案 + B案の併用</h4>
+        <h4>推奨: B案を主軸 + C案でフォールバック（A案は要検証）</h4>
         <ol>
-          <li>まず <code>__NEXT_DATA__</code> からJSON取得を試みる（A案）</li>
-          <li>失敗した場合、フリマアシストの要素を待って読み取る（B案）</li>
-          <li>どちらも失敗した場合のみ、C案（範囲限定テキスト検索）にフォールバック</li>
+          <li><strong>まずB案</strong>: フリマアシストの要素を MutationObserver で待って読み取る（最も安定）</li>
+          <li><strong>フォールバック: C案</strong>: フリマアシストが使えない場合、出品者セクション内に限定したテキスト検索</li>
+          <li><strong>A案は要検証</strong>: メルカリの商品ページで <code>__NEXT_DATA__</code> に評価データがあるか、ブラウザのDevToolsで確認してから判断</li>
         </ol>
-        <p>方法2（広範囲セレクタ）と方法3（ページ全体テキスト検索）は<strong>廃止</strong>が望ましい。</p>
+        <p>方法2（広範囲セレクタ <code>[class*="Rating"]</code>）と方法3（ページ全体テキスト検索）は<strong>廃止</strong>が望ましい。これが誤取得の主な原因。</p>
       </div>
 
       <h3>🟡 課題2: フリマアシストとの拡張機能読み込み順序</h3>
